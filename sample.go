@@ -9,6 +9,8 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+// Sample draws one transition from row rowIdx using inverse CDF sampling.
+// If rng is nil, a new source seeded from the current time is used.
 func (k *Kernel) Sample(rowIdx int, rng *rand.Rand) (int, error) {
 	if k == nil || k.P == nil {
 		return 0, fmt.Errorf("nil kernel")
@@ -31,12 +33,17 @@ func (k *Kernel) Sample(rowIdx int, rng *rand.Rand) (int, error) {
 	return n - 1, nil
 }
 
+// KernelEstimate holds the result of estimating a transition kernel from a state sequence.
+// Kernel is nil when one or more rows had no observed outgoing transitions.
 type KernelEstimate struct {
-	Counts       *mat.Dense
-	Kernel       *Kernel
-	RowsObserved []bool
+	Counts       *mat.Dense // observed transition counts
+	Kernel       *Kernel    // estimated kernel; nil if any row was unobserved
+	RowsObserved []bool     // true for each row that appeared at least once as a source state
 }
 
+// EstimateKernelFromSequence builds a transition frequency estimate from seq.
+// pseudocount adds a Laplace smoothing term to each cell before normalizing.
+// Kernel is nil if any state had no outgoing transitions in seq.
 func EstimateKernelFromSequence(seq []int, nStates int, pseudocount float64) (*KernelEstimate, error) {
 	if nStates <= 0 {
 		return nil, fmt.Errorf("nStates must be positive")
@@ -78,6 +85,8 @@ func EstimateKernelFromSequence(seq []int, nStates int, pseudocount float64) (*K
 	return est, nil
 }
 
+// SampleTraceFromSequence filters seq to the subsequence of states in subset,
+// preserving order. This corresponds to observing only the subset states in a trajectory.
 func SampleTraceFromSequence(seq []int, subset map[int]bool) []int {
 	out := make([]int, 0, len(seq))
 	for _, x := range seq {
@@ -88,6 +97,9 @@ func SampleTraceFromSequence(seq []int, subset map[int]bool) []int {
 	return out
 }
 
+// WindowedTraceEstimates partitions seq into overlapping windows of windowSize steps,
+// each offset by step, and returns a kernel estimate per window restricted to subset.
+// Useful for detecting drift in transition probabilities over time.
 func WindowedTraceEstimates(seq []int, subset map[int]bool, windowSize, step int, pseudocount float64) ([]*KernelEstimate, error) {
 	if windowSize <= 1 {
 		return nil, fmt.Errorf("windowSize must be > 1")

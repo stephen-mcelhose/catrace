@@ -6,18 +6,24 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-// Agent represents the three stochastic maps used in the finite-state agent model.
-// D: X -> G, A: G -> W, P: W -> X.
+// Agent represents the three stochastic maps of the finite-state agent model.
+//
+// The maps form a closed loop over three spaces:
+//
+//	D : X → G  (decision:   experience → action)
+//	A : G → W  (effect:     action     → world)
+//	P : W → X  (perception: world      → experience)
 type Agent struct {
-	D *mat.Dense
-	A *mat.Dense
-	P *mat.Dense
+	D *mat.Dense // decision kernel X → G
+	A *mat.Dense // effect kernel G → W
+	P *mat.Dense // perception kernel W → X
 
-	XNames []string
-	GNames []string
-	WNames []string
+	XNames []string // experience state labels
+	GNames []string // action state labels
+	WNames []string // world state labels
 }
 
+// Validate checks that D, A, P are non-nil, dimensionally consistent, and row-stochastic.
 func (a *Agent) Validate() error {
 	if a == nil {
 		return fmt.Errorf("nil agent")
@@ -49,7 +55,7 @@ func (a *Agent) Validate() error {
 	return nil
 }
 
-// QualiaKernel computes Q = D*A*P, a square kernel on X.
+// QualiaKernel computes Q = D·A·P, a square kernel on the experience space X.
 func (a *Agent) QualiaKernel() (*Kernel, error) {
 	if err := a.Validate(); err != nil {
 		return nil, err
@@ -60,7 +66,7 @@ func (a *Agent) QualiaKernel() (*Kernel, error) {
 	return NewKernel(&dap, a.XNames)
 }
 
-// StrategyKernel computes S = A*P*D, a square kernel on G.
+// StrategyKernel computes S = A·P·D, a square kernel on the action space G.
 func (a *Agent) StrategyKernel() (*Kernel, error) {
 	if err := a.Validate(); err != nil {
 		return nil, err
@@ -71,7 +77,7 @@ func (a *Agent) StrategyKernel() (*Kernel, error) {
 	return NewKernel(&apd, a.GNames)
 }
 
-// WorldKernel computes W = P*D*A, a square kernel on W.
+// WorldKernel computes W = P·D·A, a square kernel on the world space W.
 func (a *Agent) WorldKernel() (*Kernel, error) {
 	if err := a.Validate(); err != nil {
 		return nil, err

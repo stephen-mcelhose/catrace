@@ -2,14 +2,23 @@ package catrace
 
 import "fmt"
 
-// ClassDecomposition summarizes communicating classes and recurrence structure.
+// ClassDecomposition summarizes the communicating class structure of a Markov kernel.
+//
+// SCCs holds all strongly connected components identified by Kosaraju's algorithm.
+// Recurrent holds the closed SCCs; once entered, these classes cannot be escaped.
+// Transient holds all states that eventually leave their SCC with probability 1.
+// Periods maps each recurrent SCC index (into SCCs) to its period.
 type ClassDecomposition struct {
-	SCCs      [][]int
-	Recurrent [][]int
-	Transient []int
-	Periods   map[int]int
+	SCCs      [][]int     // all strongly connected components, each sorted
+	Recurrent [][]int     // closed (recurrent) components
+	Transient []int       // transient states, sorted
+	Periods   map[int]int // period of each recurrent class keyed by index into SCCs
 }
 
+// Classes decomposes k into communicating classes using Kosaraju's algorithm.
+// An edge i→j is included when k.P[i,j] exceeds tol.
+// Returns the full SCC decomposition, recurrent and transient states, and the
+// period of each recurrent class.
 func (k *Kernel) Classes(tol float64) (*ClassDecomposition, error) {
 	if k == nil || k.P == nil {
 		return nil, fmt.Errorf("nil kernel")

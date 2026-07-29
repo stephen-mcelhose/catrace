@@ -8,18 +8,22 @@ import (
 )
 
 // RectKernel represents a row-stochastic rectangular kernel.
+// RowNames and ColNames label the row and column spaces respectively.
 type RectKernel struct {
-	P        *mat.Dense
+	P        *mat.Dense // transition matrix
 	RowNames []string
 	ColNames []string
 }
 
 // Kernel represents a row-stochastic square Markov kernel.
+// StateNames labels both the row and column indices.
 type Kernel struct {
-	P          *mat.Dense
+	P          *mat.Dense // transition matrix
 	StateNames []string
 }
 
+// NewRectKernel constructs a validated rectangular row-stochastic kernel.
+// rowNames and colNames may be nil, in which case default labels are assigned.
 func NewRectKernel(p *mat.Dense, rowNames, colNames []string) (*RectKernel, error) {
 	if p == nil {
 		return nil, fmt.Errorf("nil kernel matrix")
@@ -48,6 +52,8 @@ func NewRectKernel(p *mat.Dense, rowNames, colNames []string) (*RectKernel, erro
 	return rk, nil
 }
 
+// NewKernel constructs a validated square row-stochastic kernel.
+// names may be nil, in which case default state labels are assigned.
 func NewKernel(p *mat.Dense, names []string) (*Kernel, error) {
 	if p == nil {
 		return nil, fmt.Errorf("nil kernel matrix")
@@ -69,6 +75,7 @@ func NewKernel(p *mat.Dense, names []string) (*Kernel, error) {
 	return k, nil
 }
 
+// Validate checks that every row is non-negative and sums to 1 within tol.
 func (k *RectKernel) Validate(tol float64) error {
 	if k == nil || k.P == nil {
 		return fmt.Errorf("nil kernel")
@@ -90,6 +97,7 @@ func (k *RectKernel) Validate(tol float64) error {
 	return nil
 }
 
+// Validate checks that k is square and every row is non-negative and sums to 1 within tol.
 func (k *Kernel) Validate(tol float64) error {
 	if k == nil || k.P == nil {
 		return fmt.Errorf("nil kernel")
@@ -101,6 +109,7 @@ func (k *Kernel) Validate(tol float64) error {
 	return (&RectKernel{P: k.P}).Validate(tol)
 }
 
+// Clone returns a deep copy of k.
 func (k *Kernel) Clone() *Kernel {
 	if k == nil {
 		return nil
@@ -108,6 +117,7 @@ func (k *Kernel) Clone() *Kernel {
 	return &Kernel{P: cloneDense(k.P), StateNames: cloneStrings(k.StateNames)}
 }
 
+// NumStates returns the number of states in the kernel.
 func (k *Kernel) NumStates() int {
 	if k == nil || k.P == nil {
 		return 0
@@ -116,6 +126,8 @@ func (k *Kernel) NumStates() int {
 	return r
 }
 
+// NormalizeRows rescales each row to sum to 1, clamping near-zero negatives to 0.
+// Returns an error if any row contains a significantly negative entry or a near-zero sum.
 func (k *Kernel) NormalizeRows(tol float64) error {
 	if k == nil || k.P == nil {
 		return fmt.Errorf("nil kernel")
@@ -144,6 +156,8 @@ func (k *Kernel) NormalizeRows(tol float64) error {
 	return k.Validate(math.Max(tol, 1e-9))
 }
 
+// Multiply returns the matrix product k·other as a new Kernel.
+// Both operands must be square and of the same dimension.
 func (k *Kernel) Multiply(other *Kernel) (*Kernel, error) {
 	if k == nil || other == nil {
 		return nil, fmt.Errorf("nil kernel")
@@ -165,6 +179,8 @@ func (k *Kernel) Multiply(other *Kernel) (*Kernel, error) {
 	return res, nil
 }
 
+// LeftAction evolves dist one step by computing π·P, returning the next distribution.
+// dist must have length equal to NumStates.
 func (k *Kernel) LeftAction(dist []float64) ([]float64, error) {
 	if k == nil || k.P == nil {
 		return nil, fmt.Errorf("nil kernel")
