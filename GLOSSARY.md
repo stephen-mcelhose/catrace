@@ -211,3 +211,50 @@ A distribution π that satisfies π · Q = π — applying one more step leaves 
 For a square matrix M, a vector v and scalar λ satisfying M · v = λ · v. The stationary distribution π is a left eigenvector of Q with eigenvalue 1 — meaning π · Q = 1 · π.
 
 *[3Blue1Brown: Essence of Linear Algebra, Ch. 14](https://www.youtube.com/watch?v=PFDu9oVAE-g)*
+
+---
+
+## Kosaraju's algorithm
+
+A graph algorithm that finds all **strongly connected components** (SCCs) of a directed graph in two depth-first search passes. In the context of a Markov chain, each SCC corresponds to a communicating class.
+
+**Pass 1:** DFS on the original graph; record finish times.
+**Pass 2:** DFS on the reversed graph in reverse finish-time order; each DFS tree is one SCC.
+
+Applied in `Classes()` to decompose the chain:
+- SCCs with no outgoing edges to other SCCs → **recurrent classes** (chain never leaves)
+- SCCs with outgoing edges → **transient classes** (chain eventually leaves)
+
+After SCCs are found, `Classes()` also computes the **period** of each recurrent class — the GCD of all cycle lengths within it. Period 1 = aperiodic (required for ergodicity and convergence to stationarity). Period > 1 = the chain cycles and does not converge.
+
+Not discussed in [HPC] — standard Markov chain structure theory. *[LP] §1.7.*
+
+---
+
+## Mean first passage time
+
+The expected number of steps to reach state j for the first time, starting from state i:
+
+```math
+m(i, j) = \mathbb{E}[\min\{t \geq 1 : X_t = j\} \mid X_0 = i]
+```
+
+Computed by solving a linear system: remove state j from the chain, then solve (I − Q) · m = 1 where Q is the sub-matrix of transitions among the remaining states.
+
+In `passage.go` as `MeanFirstPassage(i, j)`.
+
+---
+
+## Commute time
+
+The expected number of steps to travel from state i to state j **and back**:
+
+```math
+C(i, j) = m(i, j) + m(j, i)
+```
+
+Symmetric by definition — `C(i,j) = C(j,i)`. A natural notion of distance between states: states that are easy to travel between in both directions have low commute time.
+
+On an undirected graph with the standard random walk, commute time has a closed form in terms of the graph's effective resistance. For directed chains it must be computed from mean first passage times directly.
+
+In `passage.go` as `CommuteTime(i, j)`. Connects to the random-walk-on-graphs interpretation: commute time is the graph-theoretic distance the stationary distribution implicitly defines.
