@@ -115,6 +115,8 @@ Every kernel in catrace **is** a weighted directed graph. The two representation
 
 Thinking in graphs makes trace intuitive: the trace onto a subset $A$ is what you observe if you can only see certain nodes and all paths through hidden nodes are summed out.
 
+In catrace, use `NewRandomWalkKernel(adj, names)` to build a `Kernel` directly from a weighted adjacency matrix.
+
 *[LP] §2.1 (random walks on graphs) and §10 (conductance, spectral gap). Lovász, "Random walks on graphs: A survey" (1993) — a readable standalone reference. For the Laplacian connection: Spielman, "Spectral Graph Theory" lecture notes (freely available online).*
 
 ---

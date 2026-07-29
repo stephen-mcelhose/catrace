@@ -44,6 +44,61 @@ func TestTraceMatchesRestrictionTheoremPattern(t *testing.T) {
 	}
 }
 
+// ExampleNewRandomWalkKernel demonstrates how a graph becomes a Markov kernel.
+//
+// Consider this small network:
+//
+//	D – A – B
+//	    |  /
+//	    C
+//
+// A is the hub — it connects to B, C, and D.
+// D is a dead end — it connects only to A.
+//
+// The random walk assigns each node a transition probability proportional to
+// its edge weights. From A (degree 3), you go to each neighbor with prob 1/3.
+// From D (degree 1), you always go to A.
+//
+// The stationary distribution equals the normalized degree of each node:
+//
+//	degree(A)=3, degree(B)=2, degree(C)=2, degree(D)=1  →  total=8
+//	π = [3/8, 2/8, 2/8, 1/8] = [0.375, 0.250, 0.250, 0.125]
+//
+// A is visited most often. D is visited least — it is a structural dead end.
+func ExampleNewRandomWalkKernel() {
+	// Symmetric adjacency matrix (1 = edge present, 0 = no edge).
+	adj := mat.NewDense(4, 4, []float64{
+		//  A  B  C  D
+		0, 1, 1, 1, // A connects to B, C, D
+		1, 0, 1, 0, // B connects to A, C
+		1, 1, 0, 0, // C connects to A, B
+		1, 0, 0, 0, // D connects to A only
+	})
+
+	k, err := catrace.NewRandomWalkKernel(adj, []string{"A", "B", "C", "D"})
+	if err != nil {
+		panic(err)
+	}
+
+	// Each row of the kernel is the adjacency row divided by the node's degree.
+	fmt.Printf("P(A→B) = %.3f\n", k.P.At(0, 1)) // degree(A)=3, so 1/3
+	fmt.Printf("P(D→A) = %.3f\n", k.P.At(3, 0)) // degree(D)=1, so 1/1
+
+	// Stationary distribution: π(i) = degree(i) / total degree.
+	pi, _ := k.Stationary(1e-12, 5000)
+	fmt.Printf("π(A)   = %.3f\n", pi[0])
+	fmt.Printf("π(B)   = %.3f\n", pi[1])
+	fmt.Printf("π(C)   = %.3f\n", pi[2])
+	fmt.Printf("π(D)   = %.3f\n", pi[3])
+	// Output:
+	// P(A→B) = 0.333
+	// P(D→A) = 1.000
+	// π(A)   = 0.375
+	// π(B)   = 0.250
+	// π(C)   = 0.250
+	// π(D)   = 0.125
+}
+
 func ExampleAgent_QualiaKernel() {
 	D := mat.NewDense(2, 2, []float64{
 		0.9, 0.1,
