@@ -2,7 +2,9 @@
 
 Math and notation terms used across the walkthroughs and source code.
 
-**Reference:** Levin & Peres, *Markov Chains and Mixing Times* (2nd ed.) — free PDF at https://pages.uoregon.edu/dlevin/MARKOV/markovmixing.pdf. Page numbers below refer to that book.
+**References:**
+- **[LP]** Levin & Peres, *Markov Chains and Mixing Times* (2nd ed.) — free PDF at https://pages.uoregon.edu/dlevin/MARKOV/markovmixing.pdf
+- **[HPC]** Hoffman, Prakash & Chattopadhyay, *Traces of Consciousness*, Preprints 2024 — https://www.preprints.org/manuscript/202410.1305/v1 — the paper this codebase implements; uses kernel, stationary measure, diagram, and community throughout
 
 ---
 
@@ -14,7 +16,7 @@ A rectangular matrix where every **row sums to 1** and all entries are non-negat
 \text{row } i: \quad \sum_j M_{ij} = 1, \quad M_{ij} \geq 0
 ```
 
-*Levin & Peres, §1.1, p. 1.*
+*[LP] §1.1, p. 1.*
 
 ---
 
@@ -22,13 +24,25 @@ A rectangular matrix where every **row sums to 1** and all entries are non-negat
 
 In this codebase, kernel and stochastic matrix mean the same thing. A kernel maps one state space to another — it encodes "given I am in state i, what is my distribution over output states?" Square kernels (same input and output space) define Markov chains.
 
+*[HPC] uses "kernel" as the primary term throughout.*
+
 ---
 
 ## Markov chain
 
 A process that jumps between states over discrete time steps, where the next state depends only on the current state — not on how you got there. Fully described by a square stochastic matrix L: entry `L[i,j]` is the probability of moving from state i to state j in one step.
 
-*Levin & Peres, §1.1, p. 1.*
+*[LP] §1.1, p. 1. [HPC] §2.*
+
+---
+
+## Markov diagram
+
+The weighted directed graph associated with a Markov chain. Each **node** represents a state; each **directed edge** from node i to node j carries weight `L[i,j]` (the transition probability). Edges with probability 0 are omitted.
+
+The diagram makes the chain's structure visible: communicating classes appear as connected components or strongly connected subgraphs, and communities appear as dense clusters with sparse connections between them.
+
+*[HPC] defines this explicitly and uses it to classify free, bound, and confined particles.*
 
 ---
 
@@ -42,7 +56,7 @@ A probability distribution over states that does not change when you apply the t
 
 Interpretation: if you run the chain for a very long time, π_i is the fraction of steps spent in state i. π is the standard notation — used universally in the Markov chain literature.
 
-*Levin & Peres, §1.5, p. 9.*
+*[LP] §1.5, p. 9. [HPC] calls this the "stationary measure" and shows that the stationary measure of a trace kernel is the normalized restriction of the parent's stationary measure.*
 
 ---
 
@@ -56,13 +70,23 @@ H(Q) = -\sum_i \pi_i \sum_j Q_{ij} \log_2 Q_{ij}
 
 Measured in bits/step. A rate of 0 means the chain is fully deterministic. A rate of 1 bit means the next state is a coin flip. Higher values mean more uncertainty per step.
 
-*Levin & Peres, §4.3.*
+*[LP] §4.3. [HPC] uses entropy rate as a signature of binding — bound particles show a lowering of entropy rate within their community.*
 
 ---
 
 ## Communicating class
 
-A set of states where every state can reach every other state (possibly in multiple steps). States that cannot reach each other belong to different communicating classes.
+A set of states where every state can reach every other state (possibly in multiple steps). States that cannot reach each other belong to different communicating classes. In the Markov diagram, each communicating class corresponds to a strongly connected component.
+
+*[LP] §1.7. [HPC] connects communicating classes to free particles — a disconnected diagram with two components.*
+
+---
+
+## Community
+
+A generalization of communicating class for chains that are not cleanly decomposable. A community is a subset of states that are **highly interconnected** among themselves, with only weak transitions to and from the rest of the chain. Detected via algorithms such as infomap, spectral clustering, or modularity maximization on the Markov diagram.
+
+*[HPC] uses communities to model bound particles — states that cluster together but are not fully isolated.*
 
 ---
 
@@ -70,7 +94,7 @@ A set of states where every state can reach every other state (possibly in multi
 
 A communicating class that the chain never leaves. Once you enter it, you stay. Also called an absorbing class. A chain may have multiple recurrent classes.
 
-*Levin & Peres, §1.7.*
+*[LP] §1.7.*
 
 ---
 
@@ -84,7 +108,7 @@ A state the chain eventually leaves and never returns to. Transient states are n
 
 A chain with exactly one recurrent communicating class that is also aperiodic (not stuck in a cycle). Ergodic chains have a unique stationary distribution and converge to it from any starting state.
 
-*Levin & Peres, §1.7.*
+*[LP] §1.7. [HPC] uses ergodicity as a precondition: "if [the chain] is ergodic then [the observer] sees the asymptotic probabilities of states it shares with [the parent]."*
 
 ---
 
@@ -126,7 +150,9 @@ Formula: if the kernel is partitioned into blocks over S and its complement B:
 \text{Tr}(L) = L_{SS} + L_{SB}(I - L_{BB})^{-1}L_{BS}
 ```
 
-This is not the same as deleting rows and columns.
+This is not the same as deleting rows and columns. The trace order — the partial order where K is below L when K is a trace of L — is the central object of study in [HPC].
+
+*[HPC] §3, defines the trace order and shows it forms a non-Boolean logic.*
 
 ---
 
@@ -134,11 +160,15 @@ This is not the same as deleting rows and columns.
 
 The composed kernel `Q = D · A · P` that describes the closed-loop dynamics in **experience space** (X → X). Given how an agent currently reads a situation, Q gives the distribution over how it will read the situation next, after acting and re-observing.
 
+*[HPC] §2, conscious agent (CA) formalism.*
+
 ---
 
 ## Decision kernel (D)
 
 A rectangular stochastic matrix mapping experience states X to action states G. Row i gives the agent's action distribution when its current experience is state i.
+
+*[HPC] §2.*
 
 ---
 
@@ -146,11 +176,15 @@ A rectangular stochastic matrix mapping experience states X to action states G. 
 
 A rectangular stochastic matrix mapping action states G to world states W. Row i gives the distribution over world states that result from taking action i.
 
+*[HPC] §2.*
+
 ---
 
 ## Perception kernel (P)
 
 A rectangular stochastic matrix mapping world states W to experience states X. Row i gives the agent's experience distribution when the world is in state i.
+
+*[HPC] §2.*
 
 ---
 
