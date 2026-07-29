@@ -88,6 +88,8 @@ A generalization of communicating class for chains that are not cleanly decompos
 
 *[HPC] uses communities to model bound particles — states that cluster together but are not fully isolated.*
 
+Common algorithms for detecting communities in a Markov diagram: [Infomap](https://mapequation.org), spectral clustering, and modularity maximization. None are currently implemented in catrace.
+
 ---
 
 ## Recurrent class
