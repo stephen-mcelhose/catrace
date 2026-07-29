@@ -6,9 +6,11 @@ This project intentionally extracts only the stochastic / Markov machinery from 
 
 ## Source note
 
-This implementation and its explanatory write-up are derived from the mathematical constructions discussed in the preprint at:
+This implementation is derived from the mathematical constructions in:
 
-- https://www.preprints.org/manuscript/202410.1305#sec-preprints-h2-13
+> Hoffman, Prakash & Chattopadhyay, *Traces of Consciousness*, Preprints 2024.
+> https://www.preprints.org/manuscript/202410.1305/v1
+> Published under CC BY 4.0.
 
 In particular, the project draws on the paper's treatment of agents as coupled stochastic maps between world, experience, and action spaces, and on the trace-chain construction used to reduce a larger Markov process to an effective process on an observed subset of states.
 
@@ -41,6 +43,7 @@ Implemented concepts:
 - `sample.go` — sampling and estimation
 - `util.go` — helpers
 - `docs/math_summary.md` — sanitized math summary
+- `GLOSSARY.md` — definitions of all math and notation terms
 - `examples/simple_agent` — single-agent composition demo
 - `examples/trace_analysis` — trace-chain demo
 
@@ -60,11 +63,11 @@ The main derived kernels are:
 
 ## Trace chain
 
-For a kernel $P$ and observed subset $A$, the trace kernel is
+For a kernel $L$ and observed subset $S$, the trace kernel is
 
-$P_A = a + b (I-c)^{-1} d$
+$\text{Tr}(L) = L_{SS} + L_{SB}(I - L_{BB})^{-1}L_{BS}$
 
-under the usual block decomposition.
+under the block decomposition into observed states $S$ and hidden states $B$.
 
 This is implemented by `(*Kernel).Trace`.
 
@@ -77,51 +80,23 @@ H, err := Q.EntropyRate(2)
 tr, err := parent.Trace([]int{0,1}, 1e-12)
 ```
 
-## API notes
+## API
 
-Current library version includes a somewhat richer interface than the minimal API you suggested. In particular, this version includes:
+The library provides:
 
 - `Kernel` with optional `StateNames`
 - `Sample`
-- `Trace`
+- `Trace` and `IsTraceOf`
 - `Stationary`
 - `EntropyRate`
 - `Classes`
 - `MeanFirstPassage`
 - `CommuteTime`
-- `Agent` abstraction with `D`, `A`, `P`
-
-### Comparison with your expected kernel interface
-
-Your suggested baseline was approximately:
-
-```go
-type Kernel struct { matrix *mat.Dense }
-func (mk *Kernel) Sample(rowIdx int) (int, error)
-func (mk *Kernel) Trace(keepIndices []int) (*Kernel, error)
-func NewKernel(data [][]float64, tolerance float64) (*Kernel, error)
-func Compose(a, b *Kernel) (*Kernel, error)
-```
-
-### Why this version is slightly richer
-
-I kept a richer version because the project goal is not just a bare Markov kernel wrapper, but also an implementation of the agent-network mathematics from the paper. That makes these additions useful:
-
-- `Agent` keeps the three-map decomposition explicit
-- `StateNames` makes examples and traces easier to interpret
-- stationary / entropy / class analysis are central to the mathematical use case
-
-### Likely next simplification step
-
-A good next revision would be to layer the API as:
-
-- **minimal public kernel API** close to your proposal
-- **advanced analysis methods** as optional extras
-- `Agent` retained as a higher-level modeling abstraction
+- `Agent` abstraction with `D`, `A`, `P` and derived kernels `Q`, `S`, `W`
 
 ## Scenario write-ups
 
-These examples are easiest to interpret when they are told as short stories rather than as abstract state tables.
+These examples are presented as short stories rather than abstract state tables, to make the state spaces easier to reason about.
 
 ### 1. Single LLM task agent
 
@@ -140,8 +115,7 @@ Interpretation:
 - action captures how the chosen response changes the real task situation
 - the derived kernel $Q = DAP$ tells you how the agent's interpretation evolves from one interaction cycle to the next
 
-Code hook:
-- `examples/simple_agent/main.go`
+Code: `examples/simple_agent/main.go` — walkthrough at `examples/simple_agent/WALKTHROUGH.md`
 
 #### Played-out version: Story 1
 
@@ -164,7 +138,7 @@ In plain English: the task really was simple, it looked simple, the agent answer
 1. The real task is `task_complex` — the ticket is actually ambiguous or difficult.
 2. Perception: but the prompt is incomplete, so with probability 0.25 the agent still experiences `looks_routine`.
 3. Decision: given `looks_routine`, the agent chooses `answer` with probability 0.8.
-4. Action effect: answering directly does not resolve a complex task, so the world remains `task_complex` with probability 0.6.
+4. Action effect: answering directly rarely resolves a complex task, so the world remains `task_complex` with probability 0.1.
 5. Re-perception: the unresolved situation now looks problematic, so the next experience becomes `looks_risky` with probability 0.75.
 
 This path contributes to the transition `looks_routine -> looks_risky` in $Q$.
@@ -176,14 +150,14 @@ In plain English: the task was harder than it looked, the agent answered too qui
 1. The real task is `task_complex`.
 2. Perception: this time the agent reads it correctly and experiences `looks_risky` with probability 0.75.
 3. Decision: given `looks_risky`, the agent chooses `clarify` with probability 0.3 (or `escalate` with probability 0.6).
-4. Action effect: asking a clarifying question reduces ambiguity, so the world moves toward `task_routine` with probability 0.6.
+4. Action effect: asking a clarifying question moves the world toward `task_routine` with probability 0.4.
 5. Re-perception: the now-routine task is perceived as `looks_routine` with probability 0.85.
 
 This path contributes to the transition `looks_risky -> looks_routine` in $Q$.
 
 In plain English: the agent correctly flagged a hard task, asked for more context, the situation improved, and the next reading was routine.
 
-**Why two versions help**
+**Why multiple paths help**
 
 Together these paths show that one entry of the composite kernel is not one literal event. It is an aggregation of many possible micro-stories. When you read a probability in $Q$, think: this number compresses many possible world-experience-action-world-experience paths into one effective next-experience probability.
 
@@ -209,10 +183,9 @@ Interpretation:
 - the trace onto `{A_valid, A_invalid}` gives the effective observed dynamics of the focal agent alone
 - this is not simple deletion of hidden states; it folds hidden excursions into the observed transition probabilities
 
-Code hook:
-- `examples/trace_analysis/main.go`
+Code: `examples/trace_analysis/main.go` — walkthrough at `examples/trace_analysis/WALKTHROUGH.md`
 
-### 3. Two-agent validator / repair pair
+### 3. Two-agent validator / repair pair *(not yet implemented)*
 
 Story:
 
@@ -228,7 +201,7 @@ Interpretation:
 - this is a compact model of peer checking and repair under uncertainty
 - tracing onto `{VV, II}` gives a coarse healthy-versus-failed operational picture
 
-### 4. Three-agent majority-valid coordination network
+### 4. Three-agent majority-valid coordination network *(not yet implemented)*
 
 Story:
 
@@ -242,7 +215,7 @@ Interpretation:
 - first-passage time to `3I` measures time-to-systemic-failure
 - a trace onto `{3V, 3I}` gives a simplified robust/failure abstraction
 
-### 5. Four-agent pipeline with escalation
+### 5. Four-agent pipeline with escalation *(not yet implemented)*
 
 Story:
 
@@ -259,20 +232,27 @@ Interpretation:
 - local fixes trade speed for reliability
 - entropy rate measures how noisy or predictable the overall operating regime is
 
-## Tests and examples as documentation
+## Tests and examples
 
-The intended style for this project is exactly what you requested:
+The intended style for this project is:
 
-- short mathematical write-up
-- example program or example test
-- small finite-state scenario
+- short mathematical write-up paired with each example
+- small finite-state scenario with named states
+- runnable example program
 
-Current files include:
+Current files:
 
 - `examples/simple_agent/main.go`
 - `examples/trace_analysis/main.go`
 - `catrace_test.go`
 
-## Build note
+## Build
 
-This sandbox does not currently have the Go toolchain installed, so the code could not be compiled in-place here. The source tree is still complete and packaged for download, and should be run in a normal Go environment with Go 1.22+.
+Requires Go 1.22+.
+
+```
+go build ./...
+go test ./...
+go run examples/simple_agent/main.go
+go run examples/trace_analysis/main.go
+```
