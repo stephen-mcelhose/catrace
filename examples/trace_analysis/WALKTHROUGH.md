@@ -120,7 +120,9 @@ B-hops, and so on, all at once:
 (I - L_{BB})^{-1} = I + L_{BB} + L_{BB}^2 + L_{BB}^3 + \cdots
 ```
 
-> **Reference:** If matrix inverses are unfamiliar, [3Blue1Brown: Essence of Linear Algebra, Ch. 7](https://www.youtube.com/watch?v=uQhTuRlWMxw) covers the concept visually before the algebra.
+> **References:**
+> - Matrix inverses: [3Blue1Brown: Essence of Linear Algebra, Ch. 7](https://www.youtube.com/watch?v=uQhTuRlWMxw)
+> - Markov chain notation and stationary distributions: Levin & Peres, *Markov Chains and Mixing Times* (2nd ed.), §1.5, p. 9. Free PDF: https://pages.uoregon.edu/dlevin/MARKOV/markovmixing.pdf
 
 ### Computing (I - L_BB)⁻¹
 
