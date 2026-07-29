@@ -36,12 +36,10 @@ parent, err := catrace.NewKernel(mat.NewDense(4, 4, []float64{
 
 States indexed 0–3. Columns have the same order as rows.
 
-```
-              A_valid  A_invalid  B_valid  B_invalid
-A_valid   [   0.60      0.20      0.10      0.10   ]
-A_invalid [   0.15      0.55      0.15      0.15   ]
-B_valid   [   0.20      0.20      0.40      0.20   ]
-B_invalid [   0.10      0.20      0.20      0.50   ]
+```math
+L = \begin{bmatrix} 0.60 & 0.20 & 0.10 & 0.10 \\ 0.15 & 0.55 & 0.15 & 0.15 \\ 0.20 & 0.20 & 0.40 & 0.20 \\ 0.10 & 0.20 & 0.20 & 0.50 \end{bmatrix}
+\quad
+\begin{array}{l} \leftarrow \text{A\_valid} \\ \leftarrow \text{A\_invalid} \\ \leftarrow \text{B\_valid} \\ \leftarrow \text{B\_invalid} \end{array}
 ```
 
 Every row sums to 1. Reading row `A_valid`: when the focal agent is currently healthy, next
@@ -96,87 +94,74 @@ L = [ L_SS  |  L_SB ]
 
 From the parent matrix:
 
+```math
+L_{SS} = \begin{bmatrix} 0.60 & 0.20 \\ 0.15 & 0.55 \end{bmatrix} \quad (A \to A \text{ direct})
+\qquad
+L_{SB} = \begin{bmatrix} 0.10 & 0.10 \\ 0.15 & 0.15 \end{bmatrix} \quad (A \to B)
 ```
-L_SS = [ 0.60  0.20 ]    (A → A direct)
-       [ 0.15  0.55 ]
 
-L_SB = [ 0.10  0.10 ]    (A → B, entering hidden system)
-       [ 0.15  0.15 ]
-
-L_BS = [ 0.20  0.20 ]    (B → A, returning to observed)
-       [ 0.10  0.20 ]
-
-L_BB = [ 0.40  0.20 ]    (B → B, staying in hidden system)
-       [ 0.20  0.50 ]
+```math
+L_{BS} = \begin{bmatrix} 0.20 & 0.20 \\ 0.10 & 0.20 \end{bmatrix} \quad (B \to A)
+\qquad
+L_{BB} = \begin{bmatrix} 0.40 & 0.20 \\ 0.20 & 0.50 \end{bmatrix} \quad (B \to B)
 ```
 
 The trace formula sums all paths that start in S, bounce through B any number of times, then
 return to S:
 
-```
-Tr(L) = L_SS  +  L_SB · (I - L_BB)⁻¹ · L_BS
+```math
+\text{Tr}(L) = L_{SS} + L_{SB}(I - L_{BB})^{-1}L_{BS}
 ```
 
 The `(I - L_BB)⁻¹` term is a geometric series — it captures one B-hop, two B-hops, three
 B-hops, and so on, all at once:
 
-```
-(I - L_BB)⁻¹ = I + L_BB + L_BB² + L_BB³ + ...
+```math
+(I - L_{BB})^{-1} = I + L_{BB} + L_{BB}^2 + L_{BB}^3 + \cdots
 ```
 
 > **Reference:** If matrix inverses are unfamiliar, [3Blue1Brown: Essence of Linear Algebra, Ch. 7](https://www.youtube.com/watch?v=uQhTuRlWMxw) covers the concept visually before the algebra.
 
 ### Computing (I - L_BB)⁻¹
 
+```math
+I - L_{BB} = \begin{bmatrix} 0.60 & -0.20 \\ -0.20 & 0.50 \end{bmatrix}
 ```
-I - L_BB = [ 0.60  -0.20 ]
-           [-0.20   0.50 ]
 
-det(I - L_BB) = 0.60 * 0.50 - 0.20 * 0.20 = 0.30 - 0.04 = 0.26
+det(I − L_BB) = 0.60 × 0.50 − 0.20 × 0.20 = 0.30 − 0.04 = 0.26
 
-(I - L_BB)⁻¹ = (1/0.26) * [  0.50   0.20 ]
-                            [  0.20   0.60 ]
-
-             = [ 1.923   0.769 ]
-               [ 0.769   2.308 ]
+```math
+(I - L_{BB})^{-1} = \frac{1}{0.26} \begin{bmatrix} 0.50 & 0.20 \\ 0.20 & 0.60 \end{bmatrix} = \begin{bmatrix} 1.923 & 0.769 \\ 0.769 & 2.308 \end{bmatrix}
 ```
 
 ### Computing L_SB · (I - L_BB)⁻¹
 
-```
-[ 0.10  0.10 ] · [ 1.923   0.769 ] = [ 0.269   0.308 ]
-[ 0.15  0.15 ]   [ 0.769   2.308 ]   [ 0.404   0.462 ]
+```math
+\begin{bmatrix} 0.10 & 0.10 \\ 0.15 & 0.15 \end{bmatrix} \cdot \begin{bmatrix} 1.923 & 0.769 \\ 0.769 & 2.308 \end{bmatrix} = \begin{bmatrix} 0.269 & 0.308 \\ 0.404 & 0.462 \end{bmatrix}
 ```
 
-Row A_valid:   0.10*1.923 + 0.10*0.769 = 0.1923 + 0.0769 = 0.269
-               0.10*0.769 + 0.10*2.308 = 0.0769 + 0.2308 = 0.308
+Row A_valid:   0.10×1.923 + 0.10×0.769 = 0.1923 + 0.0769 = 0.269
+               0.10×0.769 + 0.10×2.308 = 0.0769 + 0.2308 = 0.308
 
-Row A_invalid: 0.15*1.923 + 0.15*0.769 = 0.2885 + 0.1154 = 0.404
-               0.15*0.769 + 0.15*2.308 = 0.1154 + 0.3462 = 0.462
+Row A_invalid: 0.15×1.923 + 0.15×0.769 = 0.2885 + 0.1154 = 0.404
+               0.15×0.769 + 0.15×2.308 = 0.1154 + 0.3462 = 0.462
 
 ### Computing · L_BS
 
-```
-[ 0.269   0.308 ] · [ 0.20  0.20 ] = [ 0.085   0.115 ]
-[ 0.404   0.462 ]   [ 0.10  0.20 ]   [ 0.127   0.173 ]
+```math
+\begin{bmatrix} 0.269 & 0.308 \\ 0.404 & 0.462 \end{bmatrix} \cdot \begin{bmatrix} 0.20 & 0.20 \\ 0.10 & 0.20 \end{bmatrix} = \begin{bmatrix} 0.085 & 0.115 \\ 0.127 & 0.173 \end{bmatrix}
 ```
 
-Row A_valid:   0.269*0.20 + 0.308*0.10 = 0.0538 + 0.0308 = 0.085
-               0.269*0.20 + 0.308*0.20 = 0.0538 + 0.0615 = 0.115
+Row A_valid:   0.269×0.20 + 0.308×0.10 = 0.0538 + 0.0308 = 0.085
+               0.269×0.20 + 0.308×0.20 = 0.0538 + 0.0615 = 0.115
 
-Row A_invalid: 0.404*0.20 + 0.462*0.10 = 0.0808 + 0.0462 = 0.127
-               0.404*0.20 + 0.462*0.20 = 0.0808 + 0.0923 = 0.173
+Row A_invalid: 0.404×0.20 + 0.462×0.10 = 0.0808 + 0.0462 = 0.127
+               0.404×0.20 + 0.462×0.20 = 0.0808 + 0.0923 = 0.173
 
 ### Final trace
 
-```
-Tr(L) = L_SS + L_SB · (I - L_BB)⁻¹ · L_BS
-
-      = [ 0.60  0.20 ] + [ 0.085   0.115 ]
-        [ 0.15  0.55 ]   [ 0.127   0.173 ]
-
-      = [ 0.685   0.315 ]
-        [ 0.277   0.723 ]
+```math
+\text{Tr}(L) = L_{SS} + L_{SB}(I - L_{BB})^{-1}L_{BS} = \begin{bmatrix} 0.60 & 0.20 \\ 0.15 & 0.55 \end{bmatrix} + \begin{bmatrix} 0.085 & 0.115 \\ 0.127 & 0.173 \end{bmatrix} = \begin{bmatrix} 0.685 & 0.315 \\ 0.277 & 0.723 \end{bmatrix}
 ```
 
 This matches the output exactly:
