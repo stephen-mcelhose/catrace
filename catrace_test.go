@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"catrace"
+	"github.com/stephen-mcelhose/catrace"
 	"gonum.org/v1/gonum/mat"
 )
 

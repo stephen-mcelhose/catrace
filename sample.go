@@ -3,6 +3,7 @@ package catrace
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 
 	"gonum.org/v1/gonum/mat"
@@ -94,19 +95,31 @@ func WindowedTraceEstimates(seq []int, subset map[int]bool, windowSize, step int
 	if step <= 0 {
 		return nil, fmt.Errorf("step must be positive")
 	}
+	if len(subset) == 0 {
+		return nil, fmt.Errorf("subset must be non-empty")
+	}
+
+	// Build a stable compact index: sorted subset states -> 0, 1, 2, ...
+	subsetStates := make([]int, 0, len(subset))
+	for s := range subset {
+		subsetStates = append(subsetStates, s)
+	}
+	sort.Ints(subsetStates)
+	compact := make(map[int]int, len(subsetStates))
+	for i, s := range subsetStates {
+		compact[s] = i
+	}
+	nStates := len(subsetStates)
+
 	windows := []*KernelEstimate{}
 	for start := 0; start+windowSize <= len(seq); start += step {
 		window := seq[start : start+windowSize]
 		traced := SampleTraceFromSequence(window, subset)
 		mapped := make([]int, 0, len(traced))
 		for _, v := range traced {
-			if v == 0 {
-				mapped = append(mapped, 0)
-			} else {
-				mapped = append(mapped, 1)
-			}
+			mapped = append(mapped, compact[v])
 		}
-		est, err := EstimateKernelFromSequence(mapped, 2, pseudocount)
+		est, err := EstimateKernelFromSequence(mapped, nStates, pseudocount)
 		if err != nil {
 			return nil, err
 		}

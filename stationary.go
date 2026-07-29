@@ -7,6 +7,12 @@ import (
 
 // Stationary computes a stationary distribution pi such that pi P = pi.
 // It uses power iteration on an initial uniform distribution.
+//
+// This method requires the chain to be ergodic (irreducible and aperiodic).
+// If the chain has multiple recurrent classes, power iteration from a uniform
+// start will not converge to a unique stationary distribution and the method
+// will return an error after maxIter iterations. Use Classes to inspect the
+// chain structure before calling Stationary on reducible chains.
 func (k *Kernel) Stationary(tol float64, maxIter int) ([]float64, error) {
 	if k == nil || k.P == nil {
 		return nil, fmt.Errorf("nil kernel")

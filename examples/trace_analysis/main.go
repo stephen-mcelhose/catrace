@@ -41,7 +41,7 @@ import (
 	"log"
 	"math/rand"
 
-	"catrace"
+	"github.com/stephen-mcelhose/catrace"
 	"gonum.org/v1/gonum/mat"
 )
 

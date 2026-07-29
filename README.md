@@ -19,9 +19,9 @@ Implemented concepts:
 - validated row-stochastic square kernels
 - agent triplet model with perception / decision / action maps
 - composed kernels:
-  - #$#Q = DAP#$#
-  - #$#S = APD#$#
-  - #$#W = PDA#$#
+  - $Q = DAP$
+  - $S = APD$
+  - $W = PDA$
 - trace chains on state subsets
 - stationary distributions
 - entropy rate
@@ -48,21 +48,21 @@ Implemented concepts:
 
 An agent is described by three row-stochastic kernels:
 
-- perception #$#P: W \to X#$#
-- decision #$#D: X \to G#$#
-- action #$#A: G \to W#$#
+- perception $P: W \to X$
+- decision $D: X \to G$
+- action $A: G \to W$
 
 The main derived kernels are:
 
-- qualia kernel #$#Q = DAP#$# on experiences
-- strategy kernel #$#S = APD#$# on actions
-- world kernel #$#W = PDA#$# on world states
+- qualia kernel $Q = DAP$ on experiences
+- strategy kernel $S = APD$ on actions
+- world kernel $W = PDA$ on world states
 
 ## Trace chain
 
-For a kernel #$#P#$# and observed subset #$#A#$#, the trace kernel is
+For a kernel $P$ and observed subset $A$, the trace kernel is
 
-#$#P_A = a + b (I-c)^{-1} d#$#
+$P_A = a + b (I-c)^{-1} d$
 
 under the usual block decomposition.
 
@@ -138,14 +138,14 @@ Interpretation:
 - perception captures imperfect prompt interpretation
 - decision captures the LLM policy
 - action captures how the chosen response changes the real task situation
-- the derived kernel #$#Q = DAP#$# tells you how the agent's interpretation evolves from one interaction cycle to the next
+- the derived kernel $Q = DAP$ tells you how the agent's interpretation evolves from one interaction cycle to the next
 
 Code hook:
 - `examples/simple_agent/main.go`
 
 #### Played-out version: Story 1
 
-The composite kernel #$#Q = DAP#$# is easiest to understand when you walk through concrete paths. Each entry of #$#Q#$# compresses many possible world-experience-action-world-experience micro-stories into one effective next-experience probability.
+The composite kernel $Q = DAP$ is easiest to understand when you walk through concrete paths. Each entry of $Q$ compresses many possible world-experience-action-world-experience micro-stories into one effective next-experience probability.
 
 **Version A: statistically typical path**
 
@@ -155,7 +155,7 @@ The composite kernel #$#Q = DAP#$# is easiest to understand when you walk throug
 4. Action effect: answering directly resolves the issue, so the world stays `task_routine` with probability 0.9.
 5. Re-perception: the world is still routine, so the next experience is again `looks_routine` with probability 0.85.
 
-This path contributes the bulk of the probability mass to the transition `looks_routine -> looks_routine` in #$#Q#$#.
+This path contributes the bulk of the probability mass to the transition `looks_routine -> looks_routine` in $Q$.
 
 In plain English: the task really was simple, it looked simple, the agent answered directly, and the situation remained simple when seen again.
 
@@ -167,7 +167,7 @@ In plain English: the task really was simple, it looked simple, the agent answer
 4. Action effect: answering directly does not resolve a complex task, so the world remains `task_complex` with probability 0.6.
 5. Re-perception: the unresolved situation now looks problematic, so the next experience becomes `looks_risky` with probability 0.75.
 
-This path contributes to the transition `looks_routine -> looks_risky` in #$#Q#$#.
+This path contributes to the transition `looks_routine -> looks_risky` in $Q$.
 
 In plain English: the task was harder than it looked, the agent answered too quickly, the problem persisted, and on the next pass the agent finally saw the difficulty.
 
@@ -179,15 +179,15 @@ In plain English: the task was harder than it looked, the agent answered too qui
 4. Action effect: asking a clarifying question reduces ambiguity, so the world moves toward `task_routine` with probability 0.6.
 5. Re-perception: the now-routine task is perceived as `looks_routine` with probability 0.85.
 
-This path contributes to the transition `looks_risky -> looks_routine` in #$#Q#$#.
+This path contributes to the transition `looks_risky -> looks_routine` in $Q$.
 
 In plain English: the agent correctly flagged a hard task, asked for more context, the situation improved, and the next reading was routine.
 
 **Why two versions help**
 
-Together these paths show that one entry of the composite kernel is not one literal event. It is an aggregation of many possible micro-stories. When you read a probability in #$#Q#$#, think: this number compresses many possible world-experience-action-world-experience paths into one effective next-experience probability.
+Together these paths show that one entry of the composite kernel is not one literal event. It is an aggregation of many possible micro-stories. When you read a probability in $Q$, think: this number compresses many possible world-experience-action-world-experience paths into one effective next-experience probability.
 
-Concise shorthand for reading #$#Q#$# entries:
+Concise shorthand for reading $Q$ entries:
 
 - `looks_routine -> looks_routine` — the agent correctly handled a manageable task
 - `looks_routine -> looks_risky` — the task was harder than it first appeared, or a direct answer did not stabilize it

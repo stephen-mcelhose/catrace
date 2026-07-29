@@ -1,4 +1,4 @@
-module catrace
+module github.com/stephen-mcelhose/catrace
 
 go 1.22
 
