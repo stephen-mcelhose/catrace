@@ -263,6 +263,12 @@ useful for checking whether the transition probabilities are stable over time or
 
 ---
 
+## Further reading
+
+See also the project [Glossary](../../GLOSSARY.md) for definitions of all math terms used here.
+
+---
+
 ## What you can change
 
 To experiment:
