@@ -194,9 +194,18 @@ ok, err := trace.IsTraceOf(parent, subset, 1e-12)
 // IsTraceOf = true
 ```
 
-`IsTraceOf` checks the defining property: the stationary distribution of the trace kernel,
-normalized over the subset, must equal the stationary distribution of the parent kernel
-restricted to the same subset.
+`IsTraceOf` recomputes the trace formula from `parent` on `subset` and checks that the result
+matches `trace` entry by entry within `tol`. It is a direct matrix comparison, not a
+stationary distribution check.
+
+```go
+ok, err := trace.IsTraceOf(parent, subset, 1e-12)
+// IsTraceOf = true
+```
+
+The code that follows is a separate, additional verification — it checks the paper's key
+theorem: the stationary distribution of the trace kernel must equal the parent's stationary
+distribution restricted and normalized to the observed subset.
 
 ```go
 piParent, err := parent.Stationary(1e-12, 5000)
@@ -207,8 +216,10 @@ restricted, _ := catrace.RestrictDistribution(piParent, subset, 1e-12)
 // stationary(trace)                    = 0.467532 0.532468
 ```
 
-They match to six decimal places. This is the key invariant: the trace gives the right
-long-run frequencies for the observable states, even though the hidden states are gone.
+They match to six decimal places. This is the key theorem from Hoffman, Prakash &
+Chattopadhyay: the trace gives the right long-run frequencies for the observable states,
+even though the hidden states are gone. `IsTraceOf` guarantees the matrices match; this
+check confirms the stationary distributions follow.
 
 ---
 

@@ -92,16 +92,6 @@ The agent mostly reads the task correctly, but not always.
 
 ---
 
-## Further reading
-
-See also the project [Glossary](../../GLOSSARY.md) for definitions of all math terms used here.
-
-- **Matrix multiplication** — [3Blue1Brown: Essence of Linear Algebra, Ch. 4](https://www.youtube.com/watch?v=XkY2DOUCWMU) — visual, no prior knowledge assumed. Directly relevant to Step 2.
-- **Eigenvalues and eigenvectors** — [3Blue1Brown: Essence of Linear Algebra, Ch. 14](https://www.youtube.com/watch?v=PFDu9oVAE-g) — the stationary distribution in Step 3 is an eigenvector of Q with eigenvalue 1.
-- **Markov chain notation and stationary distributions** — Levin & Peres, *Markov Chains and Mixing Times* (2nd ed.), §1.5, p. 9. Free PDF: https://pages.uoregon.edu/dlevin/MARKOV/markovmixing.pdf — the standard graduate reference; uses π throughout and defines `π = πP` exactly as we do here.
-
----
-
 ## Step 2: Compose Q = D · A · P
 
 ```go
@@ -327,3 +317,13 @@ To experiment with this example, try:
   and re-run the composition.
 - **Make A more forgiving** (raise the `clarify → task_routine` entry): see how the stationary
   distribution shifts toward `looks_routine` and the entropy rate changes.
+
+---
+
+## Further reading
+
+See also the project [Glossary](../../GLOSSARY.md) for definitions of all math terms used here.
+
+- **Matrix multiplication** — [3Blue1Brown: Essence of Linear Algebra, Ch. 4](https://www.youtube.com/watch?v=XkY2DOUCWMU) — visual, no prior knowledge assumed. Directly relevant to Step 2.
+- **Eigenvalues and eigenvectors** — [3Blue1Brown: Essence of Linear Algebra, Ch. 14](https://www.youtube.com/watch?v=PFDu9oVAE-g) — the stationary distribution in Step 3 is an eigenvector of Q with eigenvalue 1.
+- **Markov chain notation and stationary distributions** — Levin & Peres, *Markov Chains and Mixing Times* (2nd ed.), §1.5, p. 9. Free PDF: https://pages.uoregon.edu/dlevin/MARKOV/markovmixing.pdf — the standard graduate reference; uses π throughout and defines `π = πP` exactly as we do here.
