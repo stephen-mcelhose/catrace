@@ -46,6 +46,79 @@ The diagram makes the chain's structure visible: communicating classes appear as
 
 ---
 
+## Random walk on a graph
+
+A Markov chain whose state space is the **vertices** of a graph and whose transition probabilities come directly from the edge structure. This is the bridge between graph theory and Markov chain theory — every undirected weighted graph defines a canonical chain, and every chain can be visualized as a walk on its Markov diagram.
+
+### Construction
+
+Given an undirected graph $G = (V, E)$ with non-negative edge weights $w(i, j)$, define the **weighted degree**:
+
+```math
+d(i) = \sum_{j \sim i} w(i, j)
+```
+
+The random walk transition matrix is:
+
+```math
+P(i, j) = \frac{w(i, j)}{d(i)}
+```
+
+For an **unweighted** graph ($w = 1$ on every edge): $P(i, j) = 1/\deg(i)$ if $(i,j)\in E$, else $0$.
+
+### Stationary distribution
+
+For an undirected graph the stationary distribution has a closed form — no power iteration needed:
+
+```math
+\pi(i) = \frac{d(i)}{\sum_k d(k)} = \frac{d(i)}{2|E|}
+```
+
+**High-degree nodes are visited most often.** This is provable from **detailed balance** (reversibility):
+
+```math
+\pi(i)\, P(i, j) = \pi(j)\, P(j, i) \quad \text{for all } i, j
+```
+
+Detailed balance means the chain looks statistically identical run forwards or backwards — undirected graphs always produce reversible chains.
+
+### Directed graphs
+
+When edges have direction (as in a Markov diagram), detailed balance no longer holds in general and there is no closed-form stationary distribution. You must solve $\pi P = \pi$ numerically — which is what `Stationary()` does via power iteration. All catrace kernels are directed; the undirected case is a special sub-case.
+
+### Commute time and effective resistance
+
+For undirected graphs, commute time has a beautiful closed-form via **effective resistance** — treating the graph as a resistor network where each edge $(i,j)$ has resistance $1/w(i,j)$:
+
+```math
+C(i, j) = 2|E| \cdot R_{\text{eff}}(i, j)
+```
+
+$R_{\text{eff}}(i,j)$ is the voltage drop from $i$ to $j$ when one unit of current is injected. States that are structurally close in the graph (many short paths between them) have low effective resistance and low commute time. For directed kernels this shortcut does not apply and `CommuteTime()` computes directly from `MeanFirstPassage`.
+
+### Graph Laplacian
+
+The random walk is tightly related to the **graph Laplacian** $L = D - A$, where $D$ is the diagonal degree matrix and $A$ is the adjacency matrix. The random walk matrix is $P = D^{-1}A$, so $I - P = D^{-1}L$. Spectral properties of $L$ (its eigenvalues and eigenvectors) control mixing speed, community structure, and connectivity — this is the foundation of spectral clustering and graph partitioning.
+
+### Why this matters for catrace
+
+Every kernel in catrace **is** a weighted directed graph. The two representations are identical:
+
+| Graph concept         | Kernel concept            |
+|-----------------------|---------------------------|
+| Vertex                | State                     |
+| Directed edge $i→j$   | Positive entry $P(i,j)$   |
+| Edge weight           | Transition probability    |
+| Strongly connected component | Communicating class |
+| High-degree vertex    | Frequently visited state (high $\pi_i$) |
+| Community             | Near-decomposable subchain |
+
+Thinking in graphs makes trace intuitive: the trace onto a subset $A$ is what you observe if you can only see certain nodes and all paths through hidden nodes are summed out.
+
+*[LP] §2.1 (random walks on graphs) and §10 (conductance, spectral gap). Lovász, "Random walks on graphs: A survey" (1993) — a readable standalone reference. For the Laplacian connection: Spielman, "Spectral Graph Theory" lecture notes (freely available online).*
+
+---
+
 ## Stationary distribution (π)
 
 A probability distribution over states that does not change when you apply the transition matrix. Written as a row vector, it satisfies:
