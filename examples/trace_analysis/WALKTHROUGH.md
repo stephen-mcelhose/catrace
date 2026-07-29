@@ -148,7 +148,7 @@ Row A_valid:   0.10×1.923 + 0.10×0.769 = 0.1923 + 0.0769 = 0.269
 Row A_invalid: 0.15×1.923 + 0.15×0.769 = 0.2885 + 0.1154 = 0.404
                0.15×0.769 + 0.15×2.308 = 0.1154 + 0.3462 = 0.462
 
-### Computing · L_BS
+### Computing L_SB(I - L_BB)⁻¹ · L_BS
 
 ```math
 \begin{bmatrix} 0.269 & 0.308 \\ 0.404 & 0.462 \end{bmatrix} \cdot \begin{bmatrix} 0.20 & 0.20 \\ 0.10 & 0.20 \end{bmatrix} = \begin{bmatrix} 0.085 & 0.115 \\ 0.127 & 0.173 \end{bmatrix}
@@ -166,7 +166,7 @@ Row A_invalid: 0.404×0.20 + 0.462×0.10 = 0.0808 + 0.0462 = 0.127
 \text{Tr}(L) = L_{SS} + L_{SB}(I - L_{BB})^{-1}L_{BS} = \begin{bmatrix} 0.60 & 0.20 \\ 0.15 & 0.55 \end{bmatrix} + \begin{bmatrix} 0.085 & 0.115 \\ 0.127 & 0.173 \end{bmatrix} = \begin{bmatrix} 0.685 & 0.315 \\ 0.277 & 0.723 \end{bmatrix}
 ```
 
-This matches the output exactly:
+This matches the output (small differences are rounding in the worked arithmetic):
 
 ```
 Trace kernel on subset {0,1}
@@ -197,11 +197,6 @@ ok, err := trace.IsTraceOf(parent, subset, 1e-12)
 `IsTraceOf` recomputes the trace formula from `parent` on `subset` and checks that the result
 matches `trace` entry by entry within `tol`. It is a direct matrix comparison, not a
 stationary distribution check.
-
-```go
-ok, err := trace.IsTraceOf(parent, subset, 1e-12)
-// IsTraceOf = true
-```
 
 The code that follows is a separate, additional verification — it checks the paper's key
 theorem: the stationary distribution of the trace kernel must equal the parent's stationary
