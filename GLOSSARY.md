@@ -370,3 +370,80 @@ Symmetric by definition — `C(i,j) = C(j,i)`. A natural notion of distance betw
 On an undirected graph with the standard random walk, commute time has a closed form in terms of the graph's effective resistance. For directed chains it must be computed from mean first passage times directly.
 
 In `passage.go` as `CommuteTime(i, j)`. Connects to the random-walk-on-graphs interpretation: commute time is the graph-theoretic distance the stationary distribution implicitly defines.
+
+---
+
+## Product state space
+
+Given two finite state spaces S₁ and S₂, their **product state space** S₁ × S₂ is the set of all pairs (s, t) with s ∈ S₁ and t ∈ S₂. If |S₁| = n and |S₂| = m then |S₁ × S₂| = n·m.
+
+States are indexed row-major: pair (i₁, i₂) maps to index i₁·|S₂| + i₂.
+
+In the two-agent example, three product spaces are used:
+
+| Space      | Elements                              | Size |
+|------------|---------------------------------------|------|
+| W₁ × W₂   | VV, VI, IV, II                        | 4    |
+| X₁ × X₂   | ok·good, ok·bad, prob·good, prob·bad  | 4    |
+| G₁ × G₂   | all 9 worker × validator action pairs | 9    |
+
+Product spaces preserve the P, D, A paradigm: kernels P_joint (W→X), D_joint (X→G), and A_joint (G→W) are defined over product spaces with compatible dimensions, and their composition J = P·D·A yields a valid joint world kernel.
+
+---
+
+## Kronecker product (⊗)
+
+For matrices M₁ (p×q) and M₂ (r×s), the **Kronecker product** M₁ ⊗ M₂ is the (p·r)×(q·s) matrix:
+
+```math
+(M_1 \otimes M_2)_{(i_1 r + i_2),\,(j_1 s + j_2)} = (M_1)_{i_1 j_1} \cdot (M_2)_{i_2 j_2}
+```
+
+Each block of the result is the second matrix scaled by one entry of the first. If both inputs are row-stochastic, the Kronecker product is also row-stochastic — no normalization needed.
+
+In this codebase, the Kronecker product constructs `D_joint = D₁ ⊗ D₂` — the joint decision kernel of two agents that decide independently. It encodes the "no direct communication" assumption: each agent chooses its action based on its own experience alone, so the joint action probability factors as a product.
+
+*Standard linear algebra. See also [LP] §12.3 (product chains).*
+
+---
+
+## Joint kernel
+
+A **joint kernel** is a stochastic matrix defined over a product state space that describes the coupled dynamics of multiple agents. In this codebase, the joint world kernel J is a 4×4 matrix on W₁ × W₂ = {VV, VI, IV, II}.
+
+A joint kernel can be constructed two ways:
+
+1. **From joint P, D, A** (preferred): Define P_joint, D_joint, A_joint over product spaces and compose J = P_joint · D_joint · A_joint. Coupling enters through specific kernels with physical meaning. Changing any individual agent's kernel propagates through the composition.
+2. **Directly**: Specify the matrix by hand (as in the `trace_analysis` example). Simpler but loses the P, D, A decomposition.
+
+The joint kernel is analyzed with the same tools as any square kernel: `Stationary()`, `EntropyRate()`, `Classes()`, `Trace()`.
+
+---
+
+## Coupled perception
+
+When one agent's **perception kernel** depends on another agent's world state. In the two-agent example, the Validator's perception is coupled to the Worker's world state: when the Worker is degraded, the Validator is more likely to perceive `looks_bad`, even if its own internal state is fine.
+
+Formally:
+
+```math
+P_{\text{joint}}[(w_1,w_2),\,(x_1,x_2)] = P_1[w_1, x_1] \times P_{2,\text{coupled}}[(w_1,w_2),\, x_2]
+```
+
+where P₂_coupled adjusts P₂'s output based on w₁. Contrast with the independent case where P₂_coupled = P₂[w₂,:] regardless of w₁.
+
+---
+
+## Coupled action effect
+
+When one agent's **action effect** changes another agent's world state. In the two-agent example, the Validator's repair action (g₂ = repair) restores the Worker's world state toward valid — the probability of `worker_valid` increases beyond what it would be if the agents acted independently.
+
+For non-repair actions, A_joint is the standard Kronecker product A₁[g₁,w₁] × A₂[g₂,w₂]. For repair actions, A₁ is replaced by a boosted version where the "toward valid" probability is increased by ~0.20.
+
+---
+
+## Independent decisions
+
+When the **joint decision kernel** D_joint is the Kronecker product D₁ ⊗ D₂. This means each agent chooses its action based solely on its own experience, without knowing what the other agent perceives or plans to do. Also called the "no communication" assumption.
+
+Coupled decisions — where agents share information before acting — would require D_joint[(x₁,x₂),(g₁,g₂)] ≠ D₁[x₁,g₁] × D₂[x₂,g₂] for at least some joint experiences.

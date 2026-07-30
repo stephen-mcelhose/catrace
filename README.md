@@ -185,11 +185,11 @@ Interpretation:
 
 Code: `examples/trace_analysis/main.go` — walkthrough at `examples/trace_analysis/WALKTHROUGH.md`
 
-### 3. Two-agent validator / repair pair *(not yet implemented)*
+### 3. Two-agent validator / repair pair
 
 Story:
 
-One agent performs work and another agent checks or repairs it. Each may itself be in a valid or invalid mode. Sometimes the validator catches problems correctly, sometimes it misses them, and sometimes repair actions succeed only partially.
+One agent performs work and another agent checks or repairs it. Each may itself be in a valid or invalid mode. Rather than specifying the joint kernel by hand, each agent is modeled independently with its own P, D, A triplet. Joint P, D, A kernels are then defined over product state spaces and composed as J = P_joint · D_joint · A_joint — the same PDA composition as a single agent, lifted to the multi-agent level.
 
 State meanings:
 - `VV` = both agents reliable
@@ -198,8 +198,11 @@ State meanings:
 - `II` = both degraded
 
 Interpretation:
-- this is a compact model of peer checking and repair under uncertainty
+- coupling enters through P_joint (Validator observes Worker degradation) and A_joint (Validator repair restores Worker state)
+- D_joint = D₁⊗D₂ encodes the "no direct communication" assumption — each agent decides from its own experience
 - tracing onto `{VV, II}` gives a coarse healthy-versus-failed operational picture
+
+Code: `examples/validator_repair/main.go` — walkthrough at `examples/validator_repair/WALKTHROUGH.md`
 
 ### 4. Three-agent majority-valid coordination network *(not yet implemented)*
 
@@ -244,6 +247,7 @@ Current files:
 
 - `examples/simple_agent/main.go`
 - `examples/trace_analysis/main.go`
+- `examples/validator_repair/main.go`
 - `catrace_test.go`
 
 ## Build
