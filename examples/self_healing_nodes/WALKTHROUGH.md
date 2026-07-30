@@ -59,8 +59,8 @@ which claim holds.
 - **$P_\text{joint}$ (perception):** When the node is `degraded` or `overloaded`, the pool
   score the evolver observes drops — regardless of actual strategy quality. A sick node
   makes the evolver think the strategy is bad even when it isn't. Concretely,
-  $P(\text{high\_score} \mid \text{good\_strategy},\, \text{node=healthy}) = 0.85$ falls
-  to $0.55$ when `node=degraded` and to $0.20$ when `node=overloaded`.
+  P(`high_score` | `good_strategy`, node=`healthy`) = 0.85 falls to 0.55 when
+  `node=degraded` and to 0.20 when `node=overloaded`.
 
 - **$D_\text{joint}$ (decision):** Kronecker product — independent decisions. The node reads
   its own EMA; the evolver reads the pool score. Neither knows the other's reading within a
@@ -92,19 +92,24 @@ construction is:
 $$P_\text{joint}[w_n \cdot w_e,\; x_n \cdot x_e]
   = P_\text{node}[w_n, x_n] \times P_\text{evolver}(x_e \mid w_n, w_e)$$
 
-The coupling is visible in the $\text{D·G} \to \text{ema\_low} \cdot \text{high\_score}$
-entry. A degraded node suppresses the score the evolver sees, making a good strategy look
-bad:
+The coupling is visible in the `D·G → ema_low·high_score` entry. A degraded node
+suppresses the score the evolver sees, making a good strategy look bad:
 
-$$P_\text{node}[\text{degraded} \to \text{ema\_low}] = 0.20$$
-$$P_\text{evolver}(\text{high\_score} \mid \text{node=degraded},\, \text{good\_strategy}) = 0.55$$
-$$P_\text{joint}[\text{D·G},\; \text{ema\_low·high\_score}] = 0.20 \times 0.55 = 0.110$$
+```
+P_node[degraded → ema_low]                              = 0.20
+P_ev(high_score | node=degraded, good_strategy)         = 0.55
 
-Compare with the same column from H·G:
+P_joint[D·G, ema_low·high_score] = 0.20 × 0.55         = 0.110
+```
 
-$$P_\text{node}[\text{healthy} \to \text{ema\_low}] = 0.80$$
-$$P_\text{evolver}(\text{high\_score} \mid \text{node=healthy},\, \text{good\_strategy}) = 0.85$$
-$$P_\text{joint}[\text{H·G},\; \text{ema\_low·high\_score}] = 0.80 \times 0.85 = 0.680$$
+Compare with the same column from `H·G`:
+
+```
+P_node[healthy → ema_low]                               = 0.80
+P_ev(high_score | node=healthy, good_strategy)          = 0.85
+
+P_joint[H·G, ema_low·high_score]  = 0.80 × 0.85        = 0.680
+```
 
 The entry drops from $0.680$ to $0.110$ — a factor of $6\times$ — purely because the node
 is sick. When the node degrades, the evolver loses the signal it needs to distinguish a
@@ -129,7 +134,7 @@ $$\hat{a} = \left(\frac{0.70}{1.25},\; \frac{0.45}{1.25},\; \frac{0.10}{1.25}\ri
 The joint action entry coupling the evolver's `mutate` to a `healthy` next-node-world:
 
 $$A_\text{joint}[\text{thr·mutate} \to \text{H·G}]
-  = \hat{a}_0 \times A_\text{evolver}[\text{mutate} \to \text{good\_strategy}]
+  = \hat{a}_0 \times A_\text{evolver}[\text{mutate} \to \text{good strategy}]
   = 0.56 \times 0.60 = 0.336$$
 
 For Variant A the same calculation gives $\hat{a}_0 = 0.657$ and
