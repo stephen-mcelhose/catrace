@@ -225,17 +225,46 @@ For a square matrix M, its inverse M⁻¹ satisfies M · M⁻¹ = I (the identit
 
 ## Trace (of a kernel)
 
-Given a Markov chain on a large state space and a subset S of states you can observe, the **trace** is the effective chain on S alone. It folds in all hidden excursions through the complement and gives the right long-run frequencies.
+Given a Markov chain on state space N and a subset S ⊆ N you can observe, the **trace chain** (also called the *censored chain* in [LP]) is the effective chain on S alone — recording only S-to-S transitions and summing out all excursions through the complement B = N \ S.
 
-Formula: if the kernel is partitioned into blocks over S and its complement B:
+**Block decomposition.** Partition the parent kernel L according to S and B:
+
+```math
+L = \begin{bmatrix} L_{SS} & L_{SB} \\ L_{BS} & L_{BB} \end{bmatrix}
+```
+
+- $L_{SS}$: direct S → S transitions
+- $L_{SB}$: transitions leaving S into B
+- $L_{BS}$: transitions returning from B to S
+- $L_{BB}$: transitions within B (the hidden dynamics)
+
+**Formula:**
 
 ```math
 \text{Tr}(L) = L_{SS} + L_{SB}(I - L_{BB})^{-1}L_{BS}
 ```
 
-This is not the same as deleting rows and columns. The trace order — the partial order where K is below L when K is a trace of L — is the central object of study in [HPC].
+This is not the same as deleting rows and columns — naive deletion leaves rows that no longer sum to 1 and discards all influence B exerts on S between observations.
 
-*[HPC] §3, defines the trace order and shows it forms a non-Boolean logic.*
+**When $(I - L_{BB})^{-1}$ exists.** The inverse exists when B contains no recurrent states — i.e. the chain must eventually leave B and return to S with probability 1. Equivalently, the spectral radius of $L_{BB}$ is strictly less than 1, so the Neumann series converges:
+
+```math
+(I - L_{BB})^{-1} = I + L_{BB} + L_{BB}^2 + \cdots
+```
+
+Each term $L_{BB}^k$ accounts for excursions of exactly k steps within B. The full inverse sums over all possible excursion lengths — it is the "expected number of visits to B states" matrix.
+
+**Stationary distribution theorem.** If the parent chain is ergodic with stationary distribution π, the trace chain is also ergodic and its stationary distribution is the restriction of π to S, normalized:
+
+```math
+\pi_S(i) = \frac{\pi(i)}{\sum_{j \in S} \pi(j)} \quad \text{for } i \in S
+```
+
+The long-run frequencies you observe in S are exactly what the parent's stationary distribution predicts for those states — the hidden system does not distort them. This is verified in the `trace_analysis` example: `stationary(parent)|subset normalized = stationary(trace)`.
+
+**Trace order.** When K is a trace of L on some subset, write K ≤ L. This partial order on stochastic kernels is the central object of [HPC] — it defines a logic structure on the set of observers.
+
+*[LP] §2.3 (censored chains), stationary distribution theorem. [HPC] §3, trace order.*
 
 ---
 
