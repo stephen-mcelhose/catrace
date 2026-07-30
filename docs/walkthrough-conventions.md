@@ -10,7 +10,7 @@ defines what goes in it and what goes elsewhere.
 | Layer | Content |
 |-------|---------|
 | `README.md` | Story in plain English, state meanings, played-out paths, conceptual interpretation |
-| `WALKTHROUGH.md` | State space table, math worked by hand, raw terminal output, what you can change |
+| `WALKTHROUGH.md` | Context paragraph, state space tables, coupling explanation, math by hand, raw terminal output, what you can change |
 
 Do not duplicate prose between the two. The README is for browsing; the
 walkthrough is for someone with the code running in front of them.
@@ -22,34 +22,54 @@ walkthrough is for someone with the code running in front of them.
 ### 1. Opening paragraph
 
 One short paragraph situating this example relative to the others — what
-problem it introduces that the previous examples did not cover.
+problem it introduces that the previous examples did not cover. This is
+positioning, not story.
+
+Example from `validator_repair`:
+
+> This example fills the gap between the first two examples. The first example
+> modeled a single agent with P, D, A kernels. The second applied trace to a
+> joint kernel given directly. This example shows how to **build** a joint
+> kernel from two independently modeled agents — and why it matters how you
+> build it.
 
 ### 2. The story
 
-Plain English. No state names, no kernel notation. Just the situation.
+Two to four sentences only. Enough to orient a reader who has not yet read the
+README, plus one sentence naming the structural novelty this example
+introduces. Do not retell the README story in full.
 
-### 3. State space table
+### 3. State space tables
 
-A table covering **all** state spaces for every agent in the example.
+One table per agent, plus a joint world states table for multi-agent examples.
+Use this format per agent:
 
-| State | Agent | Layer | Meaning |
-|-------|-------|-------|---------|
-| `healthy` | Node | World | Node is actually functioning |
-| `ema_low` | Node | Experience | Error rate EMA below 10% |
-| `push` | Node | Action | Node works at full rate |
-| … | … | … | … |
+**Agent name:**
 
-For multi-agent examples, also include the joint world states.
+| Layer      | States                           | Meaning                          |
+|------------|----------------------------------|----------------------------------|
+| World      | `healthy`, `degraded`, ...       | What is actually true            |
+| Experience | `ema_low`, `ema_mid`, ...        | What the agent perceives         |
+| Action     | `push`, `throttle`, `idle`       | What the agent does              |
+
+For multi-agent examples, follow with a joint world states table:
+
+| State | Node       | Evolver        | Meaning                     |
+|-------|------------|----------------|-----------------------------|
+| H·G   | healthy    | good strategy  | Node fine, good config      |
+| …     | …          | …              | …                           |
 
 ### 4. Coupling
 
-Explain where and how agents are coupled — which kernel (P, D, or A) carries
-the coupling and what it means in story terms. One bullet per coupling point.
+*Multi-agent examples only.* One bullet per coupling point explaining which
+kernel (P, D, or A) carries the coupling and what it means in story terms.
+Single-agent examples omit this section entirely.
 
 ### 5. Math worked by hand
 
-For at least one key kernel entry or analysis result, show the arithmetic
-explicitly. Do not just restate the formula — compute a number.
+For at least one key result — a kernel entry, the stationary distribution, or
+an entropy rate — show the arithmetic explicitly. Do not just restate the
+formula. Compute a number.
 
 Example from `simple_agent`:
 
@@ -62,8 +82,8 @@ Example from `simple_agent`:
 ### 6. Reading the output
 
 Show the **raw terminal output** for each analysis result, then interpret it
-in one or two plain-English sentences. Do not paraphrase the numbers — show
-them exactly as the program prints them.
+in one or two plain-English sentences. Show numbers exactly as the program
+prints them — do not paraphrase.
 
 ```
 stationary(J):
@@ -78,7 +98,7 @@ The system spends 52% of its time in the best joint state…
 
 Three to five concrete experiments the reader can run by editing the matrices.
 For each: what to change, what to watch, and what it means if the number moves
-the expected direction.
+in the expected direction.
 
 ---
 

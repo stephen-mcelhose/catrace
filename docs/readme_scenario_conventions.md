@@ -14,17 +14,11 @@ See `docs/walkthrough-conventions.md` for the companion standard covering
 
 ### Story
 
-Plain English only. No state names in backticks, no kernel notation, no
-matrix references. Just the situation, the tension, and why it is interesting.
+Plain English only in the opening paragraph — no state names in backticks, no
+kernel notation. Just the situation and the tension.
 
-The story opens with the situation before introducing any mechanism:
-
-> A worker agent performs tasks while a validator agent monitors its health.
-> Either agent may itself be functioning well or badly. When the validator is
-> healthy, it can detect worker problems and attempt repairs…
-
-If the scenario introduces a structural novelty (joint kernels, trace,
-product state spaces), state it in plain English *after* the situation:
+If the scenario introduces a structural novelty (joint kernels, trace, product
+state spaces), state it in plain English *after* the situation paragraph:
 
 > Rather than writing down a 4×4 joint transition matrix by hand, each agent
 > is first modeled independently…
@@ -33,8 +27,8 @@ product state spaces), state it in plain English *after* the situation:
 
 One bullet per state space. Cover **all** state spaces for every agent —
 world, experience, and action — plus joint world states for multi-agent
-scenarios. Each bullet answers the question "what does this state mean in the
-story?"
+scenarios. Each bullet names the states and answers the question "what does
+this mean in the story?"
 
 ```
 - worker world states: `worker_valid`, `worker_invalid` — is the worker actually functioning?
@@ -42,25 +36,25 @@ story?"
 - worker actions: `produce`, `self_check`, `idle`
 ```
 
-Not:
-```
-- `VV` = both agents reliable   ← too terse, no story connection
-```
-
 ### Interpretation
 
-One bullet per coupling point or structural claim. Each bullet explains
-**what** the kernel does and **why** in story terms — not just its name.
+One bullet per structural claim. Each bullet explains **what** a kernel does
+and **why** in story terms — not just its name.
+
+For single-agent examples, bullets describe what each kernel (P, D, A) captures:
+
+```
+- perception captures imperfect prompt interpretation
+- decision captures the LLM policy
+- action captures how the chosen response changes the real task situation
+```
+
+For multi-agent examples, bullets describe coupling points:
 
 ```
 - the validator's perception is coupled to the worker's world state: a degraded
   worker shifts the validator's experience toward `looks_bad` even if the
   validator itself is fine — this is where cross-agent observation enters
-```
-
-Not:
-```
-- coupling enters through P_joint   ← names the fact, doesn't explain it
 ```
 
 ### Code line
@@ -75,34 +69,45 @@ Code: `examples/foo/main.go` — walkthrough at `examples/foo/WALKTHROUGH.md`
 
 A concrete walk through three versions of the story: typical, failure, and
 recovery. Each version steps through the full W→X→G→W cycle with explicit
-probabilities and ends with a plain-English summary sentence.
+probabilities.
 
 **Structure of each version:**
+
+Four numbered steps:
 
 1. Starting world state — name it, describe it in story terms
 2. Perception step — name the experience state, give its probability
 3. Decision step — name the action chosen, give its probability
-4. Action effect — name the next world state, give its probability, show the
+4. Action effect — name the next world state, give its probability; show the
    product if it is the interesting number
-5. One-sentence plain-English summary of what happened
+
+Then two unnumbered sentences outside the list:
+
+- "This path contributes [the bulk of / to] the [transition name] in [kernel]."
+- "In plain English: [one sentence describing what happened in story terms]."
 
 After the three versions, a short "why this matters" paragraph explaining what
 the paths together reveal that no single path shows alone.
 
-Close with a **concise shorthand table** — four to six kernel entries mapped
-to one-line plain-English readings.
+Close with a **concise shorthand list** — four to six kernel entries as bullets,
+each mapped to a one-line plain-English reading:
+
+```
+- `looks_routine -> looks_routine` — the agent correctly handled a manageable task
+- `looks_routine -> looks_risky` — the task was harder than it first appeared
+```
 
 ---
 
 ## Style rules
 
-- "Story:" as a standalone label before the story paragraph, not a header.
-- State names always in backticks: `looks_routine`, `VV`.
+- "Story:" as a standalone label before the story paragraph, not a markdown header.
+- State names in backticks in state meanings and interpretation: `looks_routine`, `VV`.
+- No state names in backticks inside the story paragraph itself.
 - Kernel expressions in math or code style: $Q = DAP$, `J = P_joint · D_joint · A_joint`.
 - No raw terminal output — that belongs in `WALKTHROUGH.md`.
 - No code snippets — that belongs in `WALKTHROUGH.md`.
 - Versions named **A / B / C**, bolded, with a short descriptive label:
   `**Version A: statistically typical path**`
-- Plain-English summary sentence at the end of each version, introduced with
-  "In plain English:".
+- "In plain English:" introduces the summary sentence at the end of each version.
 - "Played-out version: Story N" as the subsection header (`####` level).
