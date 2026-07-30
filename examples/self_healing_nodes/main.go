@@ -45,6 +45,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strings"
 
 	catrace "github.com/stephen-mcelhose/catrace"
 	"gonum.org/v1/gonum/mat"
@@ -86,7 +87,7 @@ func main() {
 	}
 
 	for _, v := range variants {
-		fmt.Printf("\n%s\n%s\n", v.name, repeat("─", len(v.name)))
+		fmt.Printf("\n%s\n%s\n", v.name, strings.Repeat("─", len(v.name)))
 		runScenario(v)
 	}
 }
@@ -118,10 +119,9 @@ func runScenario(v scenario) {
 	// Experience:   high_score=0, low_score=1
 	// Actions:      promote=0, mutate=1
 
-	_ = mat.NewDense(2, 2, []float64{
-		0.85, 0.15, // good_strategy → usually high score
-		0.20, 0.80, // bad_strategy  → usually low score
-	}) // P_evolver embedded in P_joint via evolverPCoupled below
+	// P_evolver (embedded in P_joint via evolverPCoupled below):
+	//   good_strategy → high_score 0.85, low_score 0.15
+	//   bad_strategy  → high_score 0.20, low_score 0.80
 
 	// Mirrors workerpool selectNextStrategy: 75% mutate on poor score.
 	evolverD := mat.NewDense(2, 2, []float64{
@@ -310,10 +310,4 @@ func flat3x3(a [3][3]float64) []float64 {
 	}
 }
 
-func repeat(s string, n int) string {
-	out := ""
-	for i := 0; i < n; i++ {
-		out += s
-	}
-	return out
-}
+
