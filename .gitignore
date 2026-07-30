@@ -1,2 +1,8 @@
 docs/markovmixing.pdf
 docs/markovmixing.txt
+
+# compiled example binaries
+/simple_agent
+/trace_analysis
+/validator_repair
+/self_healing_nodes
