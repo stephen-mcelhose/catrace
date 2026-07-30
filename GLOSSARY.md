@@ -129,7 +129,7 @@ A probability distribution over states that does not change when you apply the t
 \pi \cdot Q = \pi, \qquad \sum_i \pi_i = 1
 ```
 
-Interpretation: if you run the chain for a very long time, π_i is the fraction of steps spent in state i. π is the standard notation — used universally in the Markov chain literature.
+Every finite irreducible chain has at least one stationary distribution; if the chain is also aperiodic (ergodic) it has exactly one and the chain converges to it from any starting state — in that case π_i is the fraction of steps spent in state i in the long run (the **ergodic theorem**). When a chain has multiple recurrent classes, each class has its own stationary distribution and any convex combination is also stationary; which long-run frequencies you observe depends on where the chain starts. π is the standard notation — used universally in the Markov chain literature.
 
 *[LP] §1.5, p. 9. [HPC] calls this the "stationary measure" and shows that the stationary measure of a trace kernel is the normalized restriction of the parent's stationary measure.*
 
@@ -183,7 +183,13 @@ A state the chain eventually leaves and never returns to. Transient states are n
 
 ## Ergodic chain
 
-A chain with exactly one recurrent communicating class that is also aperiodic (not stuck in a cycle). Ergodic chains have a unique stationary distribution and converge to it from any starting state.
+A chain that is both **irreducible** (one recurrent communicating class — every state can reach every other state) and **aperiodic** (period 1).
+
+The **period** of a state is the GCD of all return-time lengths — the possible numbers of steps to return to that state starting from it. A state is aperiodic if its period is 1, meaning returns can happen at irregular times with no fixed cycle. In an irreducible chain all states share the same period, so the chain itself is called aperiodic or periodic.
+
+Ergodic chains have a **unique** stationary distribution and converge to it from any starting state regardless of initialization — this is the content of the **ergodic theorem**. Non-ergodic chains (periodic or with multiple recurrent classes) do not converge in this unconditional sense.
+
+`Classes()` in catrace checks both conditions: it identifies recurrent classes (irreducibility) and computes the GCD of cycle lengths within each class (period).
 
 *[LP] §1.7. [HPC] uses ergodicity as a precondition: "if [the chain] is ergodic then [the observer] sees the asymptotic probabilities of states it shares with [the parent]."*
 
