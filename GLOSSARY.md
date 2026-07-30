@@ -131,7 +131,7 @@ A probability distribution over states that does not change when you apply the t
 
 Every finite irreducible chain has at least one stationary distribution; if the chain is also aperiodic (ergodic) it has exactly one and the chain converges to it from any starting state — in that case π_i is the fraction of steps spent in state i in the long run (the **ergodic theorem**). When a chain has multiple recurrent classes, each class has its own stationary distribution and any convex combination is also stationary; which long-run frequencies you observe depends on where the chain starts. π is the standard notation — used universally in the Markov chain literature.
 
-*[LP] §1.5, p. 9. [HPC] calls this the "stationary measure" and shows that the stationary measure of a trace kernel is the normalized restriction of the parent's stationary measure.*
+*[LP] §1.4. [HPC] calls this the "stationary measure" and shows that the stationary measure of a trace kernel is the normalized restriction of the parent's stationary measure.*
 
 ---
 
@@ -145,7 +145,7 @@ H(Q) = -\sum_i \pi_i \sum_j Q_{ij} \log_2 Q_{ij}
 
 Measured in bits/step. A rate of 0 means the chain is fully deterministic. A rate of 1 bit means the next state is a coin flip. Higher values mean more uncertainty per step.
 
-*[LP] §4.3. [HPC] uses entropy rate as a signature of binding — bound particles show a lowering of entropy rate within their community.*
+*[LP] §12.3. [HPC] uses entropy rate as a signature of binding — bound particles show a lowering of entropy rate within their community.*
 
 ---
 
@@ -264,7 +264,7 @@ The long-run frequencies you observe in S are exactly what the parent's stationa
 
 **Trace order.** When K is a trace of L on some subset, write K ≤ L. This partial order on stochastic kernels is the central object of [HPC] — it defines a logic structure on the set of observers.
 
-*[LP] §2.3 (censored chains), stationary distribution theorem. [HPC] §3, trace order.*
+*[LP] §4.3 (censored chains), stationary distribution theorem. [HPC] §3, trace order.*
 
 ---
 
@@ -403,7 +403,7 @@ Each block of the result is the second matrix scaled by one entry of the first. 
 
 In this codebase, the Kronecker product constructs `D_joint = D₁ ⊗ D₂` — the joint decision kernel of two agents that decide independently. It encodes the "no direct communication" assumption: each agent chooses its action based on its own experience alone, so the joint action probability factors as a product.
 
-*Standard linear algebra. See also [LP] §12.3 (product chains).*
+*Standard linear algebra. See also [LP] §1.7 (product chains).*
 
 ---
 
