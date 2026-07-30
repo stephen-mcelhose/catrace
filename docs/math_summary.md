@@ -53,7 +53,7 @@ These are ordinary matrix products with compatible dimensions.
 
 For a parent Markov kernel $P$ on state set $N$, and a subset $A \subseteq N$, reorder states so that
 
-$P = \begin{bmatrix} a & b \\ d & c \end{bmatrix}$
+$$P = \begin{bmatrix} a & b \\ d & c \end{bmatrix}$$
 
 where block $a$ is indexed by $A$ and block $c$ is indexed by $A^c$.
 
