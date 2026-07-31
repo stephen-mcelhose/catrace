@@ -1,0 +1,2 @@
+# Tell GitHub Linguist to exclude AI tooling from language stats
+.agents/** linguist-vendored
