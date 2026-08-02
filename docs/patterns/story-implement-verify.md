@@ -22,6 +22,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#15 — example: add implement-verify example](https://github.com/stephen-mcelhose/catrace/issues/15)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

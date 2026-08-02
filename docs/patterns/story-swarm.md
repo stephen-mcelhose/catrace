@@ -18,6 +18,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#10 — example: add swarm / peer-to-peer agents example](https://github.com/stephen-mcelhose/catrace/issues/10)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

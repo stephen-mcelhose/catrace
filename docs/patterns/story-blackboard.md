@@ -18,6 +18,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#11 — example: add blackboard / shared-workspace collaboration example](https://github.com/stephen-mcelhose/catrace/issues/11)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

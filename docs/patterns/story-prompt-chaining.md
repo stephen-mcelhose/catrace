@@ -18,6 +18,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#5 — example: add prompt-chaining pipeline example](https://github.com/stephen-mcelhose/catrace/issues/5)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

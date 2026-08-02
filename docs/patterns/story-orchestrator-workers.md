@@ -21,6 +21,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#8 — example: add orchestrator-workers example](https://github.com/stephen-mcelhose/catrace/issues/8)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

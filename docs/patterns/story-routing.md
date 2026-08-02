@@ -18,6 +18,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#6 — example: add routing agent example](https://github.com/stephen-mcelhose/catrace/issues/6)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

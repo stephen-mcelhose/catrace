@@ -24,6 +24,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#16 — example: add implement-critic example](https://github.com/stephen-mcelhose/catrace/issues/16)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

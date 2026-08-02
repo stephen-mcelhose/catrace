@@ -24,6 +24,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#14 — example: add research-plan-implement example](https://github.com/stephen-mcelhose/catrace/issues/14)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

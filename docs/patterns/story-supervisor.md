@@ -21,6 +21,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#9 — example: add supervisor / hierarchical agent network example](https://github.com/stephen-mcelhose/catrace/issues/9)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

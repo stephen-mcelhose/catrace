@@ -29,6 +29,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#17 — example: add plan-implement-critic-verify example](https://github.com/stephen-mcelhose/catrace/issues/17)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

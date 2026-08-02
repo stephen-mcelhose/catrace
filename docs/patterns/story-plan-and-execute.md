@@ -20,6 +20,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#13 — example: add plan-and-execute example](https://github.com/stephen-mcelhose/catrace/issues/13)
 
 [← Back to pattern reference](agentic-patterns-reference.md)

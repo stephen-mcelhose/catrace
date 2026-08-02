@@ -22,6 +22,6 @@ Interpretation:
 
 ---
 
-Issue: *not yet filed*
+Issue: [#7 — example: add parallelisation / fan-out with voting example](https://github.com/stephen-mcelhose/catrace/issues/7)
 
 [← Back to pattern reference](agentic-patterns-reference.md)
