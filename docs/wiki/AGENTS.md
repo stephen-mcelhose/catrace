@@ -43,6 +43,23 @@ Raw sources are the existing project documents, read in place. The LLM never edi
 - **Sources section**: every page ends with `## Sources` listing its raw inputs
 - **Dates**: `date -u +%Y-%m-%d` at execution time
 
+## Ingest discipline
+
+Raw sources are living documents — story files are added as examples are implemented,
+walkthroughs are updated, and the pattern reference evolves. Keeping the wiki current
+requires a simple rule:
+
+**When a raw source changes, re-ingest it before closing the PR.**
+
+Specifically:
+- New story file created → ingest it immediately, propagate to pattern and example pages
+- Existing story file updated → re-ingest it, propagate to affected wiki pages
+- New walkthrough added → ingest it, link to its pattern page and API pages it demonstrates
+- `GLOSSARY.md` or `docs/math_summary.md` updated → re-ingest, propagate to math and API pages
+- After any batch of raw source changes → run lint to catch stale claims
+
+The lint operation is the safety net. Run it whenever in doubt.
+
 ## Operations
 
 Run these via the `llm-wiki` skill:
