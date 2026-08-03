@@ -83,9 +83,9 @@ func main() {
 		P:      workerP,
 		D:      workerD,
 		A:      workerA,
-		WNames: []string{"worker_valid", "worker_invalid"},
-		XNames: []string{"sees_ok", "sees_problem"},
-		GNames: []string{"produce", "self_check", "idle"},
+		WNames: []string{"worker: valid", "worker: invalid"},
+		XNames: []string{"sees: ok", "sees: problem"},
+		GNames: []string{"produce", "self-check", "idle"},
 	}
 
 	workerW, err := worker.WorldKernel()
@@ -123,8 +123,8 @@ func main() {
 		P:      validatorP,
 		D:      validatorD,
 		A:      validatorA,
-		WNames: []string{"validator_valid", "validator_invalid"},
-		XNames: []string{"looks_good", "looks_bad"},
+		WNames: []string{"validator: valid", "validator: invalid"},
+		XNames: []string{"looks: good", "looks: bad"},
 		GNames: []string{"validate", "repair", "idle"},
 	}
 
@@ -141,12 +141,12 @@ func main() {
 	//
 	// Row-major indexing: pair (i₁, i₂) → index i₁·n₂ + i₂
 
-	jointWNames := []string{"VV", "VI", "IV", "II"}
-	jointXNames := []string{"ok·good", "ok·bad", "prob·good", "prob·bad"}
+	jointWNames := []string{"both valid", "wkr-ok / val-dn", "wkr-dn / val-ok", "both invalid"}
+	jointXNames := []string{"wkr:ok · val:good", "wkr:ok · val:bad", "wkr:prob · val:good", "wkr:prob · val:bad"}
 	jointGNames := []string{
-		"produce|validate", "produce|repair", "produce|idle",
-		"self_check|validate", "self_check|repair", "self_check|idle",
-		"idle|validate", "idle|repair", "idle|idle",
+		"produce | validate", "produce | repair", "produce | idle",
+		"check | validate", "check | repair", "check | idle",
+		"idle | validate", "idle | repair", "idle | idle",
 	}
 
 	// P_joint (4×4, W→X) ─ COUPLING 1: Validator observes Worker's world state.

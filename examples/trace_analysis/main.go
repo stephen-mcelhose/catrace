@@ -52,7 +52,7 @@ func main() {
 		0.15, 0.55, 0.15, 0.15,
 		0.20, 0.20, 0.40, 0.20,
 		0.10, 0.20, 0.20, 0.50,
-	}), []string{"A_valid", "A_invalid", "B_valid", "B_invalid"})
+	}), []string{"agent: ok", "agent: error", "support: ok", "support: error"})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func main() {
 		file  string
 	}{
 		{parent, "Trace Analysis — parent kernel (4 states)", "trace_analysis_parent.html"},
-		{trace, "Trace Analysis — trace kernel on {A_valid, A_invalid}", "trace_analysis_trace.html"},
+		{trace, "Trace Analysis — trace kernel on {agent: ok, agent: error}", "trace_analysis_trace.html"},
 	} {
 		html, err := kv.k.ToHTML(&catrace.VisualiseOptions{Title: kv.title})
 		if err != nil {
