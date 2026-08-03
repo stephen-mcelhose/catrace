@@ -26,7 +26,10 @@ Experiments are distinct from examples. An **example** (`examples/`) demonstrate
 | Slug | Claim | Status | Verdict |
 |------|-------|--------|---------|
 | [nodes-throttle-vs-evolver](nodes-throttle-vs-evolver/hypothesis.md) | Node throttle is primary recovery mechanism; evolver contributes but is not essential | Complete | Supported (3/3 metrics) |
-| [wiki-knowledge-graph](wiki-knowledge-graph/hypothesis.md) | Trace chain corrects importance distortion caused by missing wiki pages | Pending | — |
+| [wiki-knowledge-graph](wiki-knowledge-graph/hypothesis.md) | Trace chain corrects importance distortion caused by missing wiki pages | Complete | Not supported (1/4 criteria) |
+| [spectral-gap-mixing-time](spectral-gap-mixing-time/hypothesis.md) | Spectral gap rank-orders kernels correctly by empirical mixing speed | Pending | — |
+| [stationary-sensitivity](stationary-sensitivity/hypothesis.md) | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution | Pending | — |
+| [n-agent-scalability](n-agent-scalability/hypothesis.md) | Dense joint kernel approach becomes intractable at N=4+ agents; trace collapses are the solution | Pending | — |
 
 ## Methodology
 
