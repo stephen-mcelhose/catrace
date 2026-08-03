@@ -116,6 +116,56 @@ and one you hope works.
 
 ---
 
+## Where this applies
+
+Ordered by how quickly a software engineer or data scientist can pick it up and get a number.
+
+**LLM evaluation pipelines.** You have a generator and a critic — evaluator, judge, re-ranker.
+The natural question is whether a stricter critic actually improves output quality long-run,
+or just adds revision churn. Encode both configurations as joint kernel variants: critic threshold
+is a parameter in the decision kernel D. The stationary distribution and MFPT answer the question
+before you run a single eval.
+
+**CI/CD pipelines.** States: `queued`, `building`, `testing`, `deploying`, `succeeded`, `failed`.
+Trace onto `{succeeded, failed}` for end-to-end pass rates. MFPT from `queued` to `succeeded` is
+expected delivery latency. Commute time between `failed` and `succeeded` quantifies the cost of a
+broken build. Compare parallel-test vs. sequential-test designs as kernel variants — same topology,
+different parameters, metrics vote on the better design.
+
+**Incident response.** States: `healthy`, `degraded`, `critical`, `resolved`. Auto-remediation is
+an agent. Variant A fires at `degraded`; Variant B only at `critical`. Which produces a better
+stationary distribution over health? Lower MFPT from `critical` to `healthy`? This is the
+self-healing-nodes pattern applied to infrastructure — and the completed experiment
+(`experiments/nodes-throttle-vs-evolver/`) shows what a real verdict looks like.
+
+**RAG and knowledge base quality.** The structure of a knowledge graph shapes what an agent can
+correctly understand about a task — directly, as the Perception kernel P. A well-connected graph
+lowers the probability of misinterpretation; a sparse one raises it. This makes it possible to
+predict how a knowledge base change will affect agent behavior before deploying it.
+The pending `kg-grounding-agent-behavior` experiment formalizes the claim with testable metric predictions.
+
+**Multi-agent design before you build.** A four-agent system has a product state space that is
+hard to reason about by inspection. Encode the architecture as joint kernels, compute the
+stationary distribution and ergodicity, and trace onto the states you actually care about.
+If the numbers don't look right, revise the design — not the running system.
+
+**Engineering process.** PR review cycles, on-call handoffs, sprint ceremonies. Commute time
+between `draft` and `merged` quantifies the round-trip cost of a review cycle. MFPT from
+`changes_requested` back to `approved` tells you how expensive a blocking review is versus a
+non-blocking one. The numbers are small and the state spaces are simple; the value is in
+making the cost of friction explicit.
+
+---
+
+**Where it fits less well.** The model is memoryless — anything that depends on how many times
+something has happened before requires encoding that count explicitly in the state space.
+State spaces must be finite and discrete; continuous or very high-dimensional systems need
+careful discretisation before any of this applies. And for new systems with no logs,
+you construct kernels from domain knowledge rather than data — powerful, but only as good
+as the assumptions going in.
+
+---
+
 ## Two disciplines worth dwelling on
 
 **The LLM-wiki** (`docs/wiki/`) — this project's wiki was built incrementally by an AI agent:
