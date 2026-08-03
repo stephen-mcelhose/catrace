@@ -1,61 +1,78 @@
----
-title: "N-agent joint kernel scalability bounds"
-type: analysis
-workspace: /Users/stephen.mcelhose.ext/repos/catrace
-created_at: 2025-01-24T12:00:00Z
-skill: explore
----
-
-# Hypothesis: N-agent joint kernel scalability bounds
-
-> Fill in all sections marked [TODO] **before running catrace**. Fill in Results and Verdict after.
+# Hypothesis: Trace collapse restores tractability for N-agent networks
 
 ## Claim
 
-The current dense-matrix approach in `catrace` becomes computationally intractable at N=4 agents (3 states each, 81 joint states) and practically impossible at N=5 (243 joint states) due to the $O(k^{2N})$ scaling of the transition matrix size and $O(k^{3N})$ scaling of matrix operations like inversion (used in Trace).
+The trace chain is the principled answer to state-space explosion in multi-agent catrace models.
+A network of N agents with k world states each produces a joint kernel over k^N states — but the
+vast majority of those states are not directly observable or actionable. The claim is that
+collapsing the joint kernel onto a small observable subset via `Trace` is exact (not an
+approximation), stationary-consistent, and produces an interpretable kernel that answers the
+question you actually care about — regardless of how large the full joint space is.
+
+In other words: the state-space explosion is not a problem to be solved by sparse matrices or
+approximations. It is dissolved by the trace.
 
 ## Context
 
-- **Pattern:** Swarm / Multi-agent Coordination
-- **Related example:** `examples/self_healing_nodes`
-- **Motivation:** Patterns like Swarm (issue #10) and Three-agent majority-valid (issue #9) require 3+ agents. The library needs clear bounds on where dense representations fail to guide future sparse or factored implementations.
+- **Pattern:** Swarm / Peer-to-peer (10), any N > 2 agent topology
+- **Related example:** `examples/self_healing_nodes` (2-agent trace to {H·G, O·B})
+- **Motivation:** Patterns like Swarm (#10) and Supervisor/Hierarchical (#9) require 3+ agents.
+  The joint state space grows as k^N, but the questions we want to answer — "is the majority
+  healthy?", "how fast does the swarm recover from full degradation?" — live in a 2- or 3-state
+  coarse view. The trace is how you get there without approximation.
 
 ## Variant definitions
 
-| Variant | Label | Description |
-|---------|-------|-------------|
-| A | N=2 | Joint system of 2 agents ($3^2=9$ states) |
-| B | N=3 | Joint system of 3 agents ($3^3=27$ states) |
-| C | N=4 | Joint system of 4 agents ($3^4=81$ states) |
-| D | N=5 | Joint system of 5 agents ($3^5=243$ states) |
+| Variant | Label       | Description                                                       |
+|---------|-------------|-------------------------------------------------------------------|
+| A       | Full view   | 4-agent joint kernel J over 3^4 = 81 world states; full analysis |
+| B       | Coarse view | Trace of J onto 2 states: majority-healthy vs majority-degraded   |
 
-*The repeated unit is the node agent from `self_healing_nodes` ($k=3$ world states).*
+*The repeated unit is the node agent from `self_healing_nodes` (3 world states: Healthy, Overload,
+Failed). Four independent nodes, coupled only through a shared evolver action effect (global
+config quality).*
 
 ## Variable kernel entries
 
-The transition matrix $J$ size scales exponentially.
+The only thing that changes between A and B is the level of description — the underlying system
+is identical.
 
-| Variant | Matrix Dims | Total Entries | Memory (float64) |
-|---------|-------------|---------------|------------------|
-| N=2 | 9x9 | 81 | ~0.6 KB |
-| N=3 | 27x27 | 729 | ~5.8 KB |
-| N=4 | 81x81 | 6,561 | ~52 KB |
-| N=5 | 243x243 | 59,049 | ~472 KB |
-| N=6 | 729x729 | 531,441 | ~4.2 MB |
+| Property           | Variant A (full)             | Variant B (trace)             |
+|--------------------|------------------------------|-------------------------------|
+| State space        | 81 joint states              | 2 coarse states               |
+| Kernel size        | 81 × 81 = 6,561 entries      | 2 × 2 = 4 entries             |
+| Stationary dist.   | π over 81 states             | π_A (normalized restriction)  |
+| Interpretability   | Requires summing many states | Directly readable             |
+
+**Observable subset definition:**
+
+- *Majority-healthy*: ≥ 3 of 4 nodes in Healthy state
+- *Majority-degraded*: ≥ 3 of 4 nodes in Overload or Failed state
+
+All other joint states (mixed configurations) are hidden — they are folded into the trace via
+the `b·(I-c)⁻¹·d` term.
 
 ## Predictions
 
-| Metric | Expression | Predicted direction | Why |
-|--------|-----------|--------------------|----|
-| Construction time | wall(Qualia/World) | N=5 >> N=2 | Kronecker product nesting cost |
-| Trace time | wall(Trace) | N=5 >> N=2 | $O(S^3)$ where $S=3^N$ |
-| Memory usage | size(J.P) | N=5 >> N=2 | $O(3^{2N})$ |
+State the expected direction for each metric *before running*:
 
-*Prediction: N=4 will show noticeable slowdown in Trace, and N=5 will reach the practical limit for interactive use (seconds per operation).*
+| Metric                        | Expression                            | Predicted direction          | Why                                                                               |
+|-------------------------------|---------------------------------------|------------------------------|-----------------------------------------------------------------------------------|
+| Stationary consistency        | `IsTraceOf(J, subset, tol)`           | true                         | Stationary-restriction theorem is exact by construction                           |
+| π agreement                   | π(J)\|subset normalized vs π(trace)   | Equal to machine precision   | Same theorem                                                                      |
+| Majority-healthy mass         | π_trace(majority-healthy)             | > 0.5                        | Independent nodes each spend majority of time healthy; joint majority follows     |
+| Recovery speed                | MFPT(majority-degraded → majority-healthy) | < MFPT on single node   | 4 nodes recovering independently; first to reach healthy shifts the majority fast |
+| Coarse kernel interpretability | Majority-healthy self-loop           | > 0.7                        | Strong individual self-healing should aggregate to strong collective self-healing  |
 
 ## Verdict rule
 
-The claim is supported if wall time for `Trace` on N=5 exceeds 5 seconds or if memory growth follows the predicted $k^{2N}$ curve.
+Claim is supported if:
+1. `IsTraceOf = true` (necessary — if this fails the trace formula is broken)
+2. π agreement is exact (to `tol = 1e-9`)
+3. The coarse kernel is interpretable: majority-healthy self-loop > 0.5 and MFPT(degraded→healthy) < MFPT(healthy→degraded)
+
+All three must hold. This is not a "majority vote" experiment — the trace is either exact or it
+isn't.
 
 ---
 
@@ -63,16 +80,36 @@ The claim is supported if wall time for `Trace` on N=5 exceeds 5 seconds or if m
 
 > Fill in after running.
 
-| Metric | N=2 | N=3 | N=4 | N=5 | Predicted direction | Correct? |
-|--------|-----|-----|-----|-----|--------------------|----|
-| Trace wall time | | | | | A < B < C < D | |
-| Memory (entries) | 81 | 729 | 6,561 | 59,049 | A < B < C < D | |
+| Metric                                      | Value | Predicted         | Correct? |
+|---------------------------------------------|-------|-------------------|----------|
+| IsTraceOf                                   |       | true              |          |
+| π agreement (max abs diff)                  |       | < 1e-9            |          |
+| π_trace(majority-healthy)                   |       | > 0.5             |          |
+| MFPT(majority-degraded → majority-healthy)  |       | finite, < single-node MFPT | |
+| Majority-healthy self-loop                  |       | > 0.7             |          |
 
 ## Verdict
 
-**Claim:** [Pending]
-**Metrics in agreement:** [0/3]
+**Claim:** [supported / not supported]
+**Metrics in agreement:** [N/3]
 
 ## Interpretation
 
-[TODO]
+[What the numbers mean architecturally. If supported: the trace is the right tool for N-agent
+analysis and the state-space size is irrelevant to the quality of the answer. If not supported:
+identify which step fails — construction, stationary computation, or the trace formula itself.]
+
+## Scaling note (secondary)
+
+For reference, the joint state space sizes for this agent unit (k=3):
+
+| N agents | Joint states | Matrix entries | Memory (float64) |
+|----------|-------------|----------------|------------------|
+| 2        | 9           | 81             | ~0.6 KB          |
+| 3        | 27          | 729            | ~5.8 KB          |
+| 4        | 81          | 6,561          | ~52 KB           |
+| 5        | 243         | 59,049         | ~472 KB          |
+| 6        | 729         | 531,441        | ~4.2 MB          |
+
+The trace output is always small (2–4 states). Construction of the full joint kernel is a one-time
+cost; all subsequent analysis is on the collapsed chain.
