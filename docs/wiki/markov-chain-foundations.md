@@ -67,6 +67,23 @@ It is computed by solving a linear system: remove state j, then solve (I − Q)�
 
 The commute time C(i,j) = m(i,j) + m(j,i) is symmetric and measures the expected round-trip cost between two states. It appears in [[Example: Self-Healing Nodes]] to characterize recovery speed, and is the key metric in [[Dev-Workflow Patterns]] for quantifying the cost of a review cycle.
 
+## Spectral gap and mixing time
+
+For an ergodic chain, the **spectral gap** is 1 − |λ₂|, where λ₂ is the second-largest eigenvalue of P by magnitude (λ₁ = 1 always). It governs how fast the chain converges to its stationary distribution:
+
+- Large spectral gap → fast mixing (chain forgets its starting state quickly)
+- Small spectral gap → slow mixing (chain can be "stuck" in regions for many steps)
+
+The theoretical mixing time bound is proportional to 1 / (spectral gap). Whether this bound is tight enough to be practically useful for comparing catrace kernels — i.e., whether spectral gap reliably rank-orders kernels by empirical mixing speed — is the subject of the pending `experiments/spectral-gap-mixing-time` experiment (#25). If confirmed, `Kernel.SpectralGap()` would be a natural addition to the [[catrace API]], complementing `Stationary` with a convergence-speed measure.
+
+**Total variation distance** is the standard measure of mixing progress:
+
+```
+TV(μ, π) = (1/2) Σ_i |μ_i − π_i|
+```
+
+Starting from any initial distribution μ, TV(μ·Pᵗ, π) → 0 as t → ∞. The mixing time at threshold ε is the first t where TV < ε for all starting states.
+
 ## Practical implementation notes
 
 catrace implements classical stochastic kernels throughout. The HPC source paper (see [[PDA Triplet Model]]) contains notation suggestive of an amplitude-based formulation; catrace ignores those artifacts and enforces:

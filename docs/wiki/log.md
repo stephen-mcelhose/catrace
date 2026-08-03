@@ -64,3 +64,14 @@ Experiment scaffold added (outside wiki root, in experiments/):
 - experiments/README.md
 - experiments/hypothesis-template.md
 - experiments/nodes-throttle-vs-evolver/hypothesis.md (worked example, Verdict: supported 4/4 metrics)
+
+---
+
+## [2026-08-03] lint | 17 pages checked, 4 issues found, 4 fixed
+
+Issues found and fixed:
+- **catrace-api.md**: missing `graph.go` (NewRandomWalkKernel) and `visualise.go` (ToHTML) from package layout table; both added with method documentation sections
+- **markov-chain-foundations.md**: AGENTS.md domain lists "spectral theory, mixing" but page had no content on it; added "Spectral gap and mixing time" section (spectral gap definition, mixing time bound, total variation distance, link to pending experiment #25)
+- **variant-comparison-methodology.md**: only referenced nodes-throttle-vs-evolver; added "Pending experiments" table for spectral-gap-mixing-time (#25), stationary-sensitivity (#26), n-agent-scalability
+
+No orphans. No contradictions. No index gaps.

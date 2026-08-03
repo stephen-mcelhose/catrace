@@ -18,8 +18,10 @@ catrace is a Go library (requires Go 1.22+, uses `gonum`) for finite-state Marko
 | `trace.go`     | Trace chain construction and verification             |
 | `stationary.go`| Stationary distribution and entropy rate              |
 | `analysis.go`  | Communicating/recurrent class decomposition           |
+| `graph.go`     | `NewRandomWalkKernel` — build a kernel from a weighted adjacency matrix |
 | `passage.go`   | Mean first-passage times and commute times            |
 | `sample.go`    | Sampling, kernel estimation, windowed estimates       |
+| `visualise.go` | `ToHTML` — self-contained D3 force-directed graph of any kernel |
 | `util.go`      | Helpers                                               |
 
 ## Core type: Kernel
@@ -91,6 +93,27 @@ c, err := K.CommuteTime(i, j int)
 ```
 
 `MeanFirstPassage` solves the linear system (I−Q)·h = 1 on non-target states. Self-MFPT (from == to) returns 0 by library convention. See [[Markov Chain Foundations]].
+
+### Random walk kernel
+
+```go
+K, err := catrace.NewRandomWalkKernel(adj [][]float64)
+// adj[i][j] = edge weight; zero = no edge. Rows normalized to row-stochastic.
+// Stationary distribution has closed form: π_i ∝ degree(i)
+```
+
+Builds a Kernel from a weighted adjacency matrix. Used in the wiki-knowledge-graph experiment to construct a PageRank-style kernel from wikilink structure.
+
+### Visualisation
+
+```go
+html, err := K.ToHTML(opts *catrace.VisualiseOptions)
+// Returns a self-contained HTML file: D3 force-directed graph
+// Nodes scaled by stationary mass; edge width by transition probability
+// StateNames used as node labels if set
+```
+
+Renders any kernel as an interactive browser graph. Each example writes its kernel(s) to `*.html` output files. No external dependencies — the HTML file is fully self-contained.
 
 ### Sampling and estimation
 

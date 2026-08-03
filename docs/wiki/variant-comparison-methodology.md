@@ -84,6 +84,18 @@ Implemented examples are not variant comparisons by default — they demonstrate
 
 The `experiments/` directory is where these comparisons live, separate from the example walkthroughs.
 
+## Pending experiments
+
+Three further experiments are filed and awaiting runs:
+
+| Slug | Claim | Issue |
+|------|-------|-------|
+| `spectral-gap-mixing-time` | Spectral gap (1 − \|λ₂\|) rank-orders kernels correctly by empirical mixing speed; a kernel with 2× the spectral gap mixes in roughly half the steps | #25 |
+| `stationary-sensitivity` | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution; low-π rows have negligible effect | #26 |
+| `n-agent-scalability` | The trace chain restores tractability for N-agent networks: a joint kernel built over k^N states can be collapsed to a small observable subset without losing stationary consistency | — |
+
+These experiments extend the methodology beyond single-system variant comparison into **measurement** (spectral gap, sensitivity) and **scale** (N-agent trace collapse). The hypothesis files are in `experiments/<slug>/hypothesis.md`.
+
 ## Sources
 
 - `examples/self_healing_nodes/WALKTHROUGH.md`
