@@ -138,13 +138,57 @@ Three agents coordinate on a shared task. As long as at least two are functionin
 
 [Full story, state meanings, and interpretation →](docs/patterns/story-supervisor.md)
 
-### 6. Four-agent pipeline with escalation *(not yet implemented)*
+### 6. Prompt-chaining document pipeline
 
 Story:
 
-A four-stage workflow handles incoming work. Local fixes are fast but unreliable, rerouting helps around isolated failures, and escalation is expensive but can stabilize the whole system. The network may move between fully healthy operation, partial degradation, and systemic breakdown.
+A document intelligence pipeline sends raw text through three specialist stages in sequence: an extractor identifies key claims, a summariser condenses them into a structured brief, and a formatter produces the final delivery-ready report. Between stages a quality gate checks the intermediate output; if it fails, the stage reruns with slightly different framing before passing the result on. The pipeline can stall in a retry loop or abandon a document entirely if the gate repeatedly rejects.
 
-[Full story, state meanings, and interpretation →](docs/patterns/story-prompt-chaining.md)
+Rather than modeling the pipeline as a single deterministic graph, each stage is a perception-decision-action loop. The stage agent perceives input quality imperfectly — a degraded input may look processable; a clean one may appear noisy — and its policy determines whether to advance, retry, or escalate. The world kernel W = PDA captures the full stage-to-stage transition matrix including retry loops and failure exits.
+
+- world states: `raw`, `extracted`, `summarised`, `formatted`, `failed` — the true pipeline stage the document has reached
+- experience states: `input_clear`, `input_noisy` — whether the stage agent perceives its input as processable
+- actions: `process`, `retry`, `escalate` — attempt the transformation, reframe and try again, or abandon
+
+Interpretation:
+
+- perception captures how reliably a stage agent reads the quality of its incoming material; `raw` documents are mostly perceived as noisy, `formatted` documents as clear
+- decision captures the agent's policy given perceived input quality; `input_clear` leads mostly to `process`, `input_noisy` splits between `retry` and `escalate`
+- action captures how the chosen action advances (or fails to advance) the pipeline world state
+- tracing onto `{raw, formatted, failed}` collapses the intermediate stages and shows the pipeline's end-to-end success and failure rate directly
+
+Code: `examples/prompt_chaining/main.go` — walkthrough at `examples/prompt_chaining/WALKTHROUGH.md`
+
+#### Played-out version: Story 6
+
+**Version A: statistically typical path**
+
+1. World state `extracted` (29.6% of steady-state time — the most common stage)
+2. P[`extracted`, `input_clear`] = 0.60 → agent perceives `input_clear`
+3. D[`input_clear`, `process`] = 0.80 → agent chooses `process`
+4. A[`process`, `summarised`] = 0.35 → world advances to `summarised` (0.60 × 0.80 × 0.35 = 0.168)
+
+This path contributes the bulk of the `extracted → summarised` entry in W. In plain English: a document whose claims have been extracted is perceived as processable, the agent attempts the summarisation, and it advances to the structured-brief stage.
+
+**Version B: failure path**
+
+1. World state `raw` — unprocessed document entering the pipeline
+2. P[`raw`, `input_noisy`] = 0.75 → agent perceives `input_noisy`
+3. D[`input_noisy`, `escalate`] = 0.25 → agent chooses `escalate`
+4. A[`escalate`, `failed`] = 0.80 → world moves to `failed` (0.75 × 0.25 × 0.80 = 0.15)
+
+This path contributes to W[`raw`, `failed`] = 0.20. In plain English: a raw document looks unprocessable to the agent, the agent gives up rather than retrying, and the document exits the pipeline as a failure.
+
+**Version C: recovery from failure**
+
+1. World state `failed` (14.9% steady-state — the pipeline occasionally revisits failure)
+2. P[`failed`, `input_clear`] = 0.15 → agent perceives `input_clear` (rare, but possible)
+3. D[`input_clear`, `process`] = 0.80 → agent chooses `process`
+4. A[`process`, `extracted`] = 0.30 → world moves to `extracted` (0.15 × 0.80 × 0.30 = 0.036)
+
+This path contributes to W[`failed`, `extracted`]. In plain English: a failed document occasionally re-enters the pipeline when the stage agent happens to perceive its input as workable — even from failure, the chain is not absorbing.
+
+The three paths together show why a 5-state pipeline cannot be understood by inspection: the stationary distribution (12.3% `raw`, 29.6% `extracted`, 26.7% `summarised`, 16.5% `formatted`, 14.9% `failed`) arises from the interaction of all three paths simultaneously. The coarse trace onto {`raw`, `formatted`, `failed`} normalises to 28.2% / 37.8% / 34.0% — the pipeline succeeds roughly as often as it fails at the end-state level.
 
 ## Tests and examples
 
