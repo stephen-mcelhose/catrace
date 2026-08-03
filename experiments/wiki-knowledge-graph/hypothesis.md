@@ -118,37 +118,70 @@ Criterion 4 is mathematical — it must hold. Criteria 1-3 are structural.
 
 ## Results
 
-> Fill in after running `go run experiments/wiki-knowledge-graph/main.go`
-
 | Page | Naive π | Trace-corrected π | Rank change |
 |------|---------|-------------------|-------------|
-| Example: Self-Healing Nodes | 0.1477 | | |
-| Markov Chain Foundations | 0.1162 | | |
-| PDA Triplet Model | 0.1099 | | |
-| Joint Kernels and Coupling | 0.1056 | | |
-| Trace Chain | 0.0947 | | |
-| Agentic Patterns Catalogue | 0.0747 | | |
-| Example: Validator Repair | 0.0698 | | |
-| catrace API | 0.0684 | | |
-| Example: Simple Agent | 0.0659 | | |
-| Variant Comparison Methodology | 0.0489 | | |
-| Dev-Workflow Patterns | 0.0400 | | |
-| Example: Hidden Support System | 0.0237 | | |
-| Structural Patterns | 0.0208 | | |
-| catrace Glossary | 0.0137 | | |
+| Example: Self-Healing Nodes | 0.1477 | 0.1402 | 0 |
+| Markov Chain Foundations | 0.1162 | 0.1150 | −1 |
+| PDA Triplet Model | 0.1099 | 0.1154 | +1 |
+| Joint Kernels and Coupling | 0.1056 | 0.1105 | 0 |
+| Trace Chain | 0.0947 | 0.0962 | 0 |
+| Agentic Patterns Catalogue | 0.0747 | 0.0807 | 0 |
+| Example: Validator Repair | 0.0698 | 0.0698 | −1 |
+| catrace API | 0.0684 | 0.0739 | +1 |
+| Example: Simple Agent | 0.0659 | 0.0666 | 0 |
+| Variant Comparison Methodology | 0.0489 | 0.0417 | 0 |
+| Dev-Workflow Patterns | 0.0400 | 0.0377 | 0 |
+| Example: Hidden Support System | 0.0237 | 0.0240 | 0 |
+| Structural Patterns | 0.0208 | 0.0134 | −1 |
+| catrace Glossary | 0.0137 | 0.0148 | +1 |
 
-`IsTraceOf`: [ ]
+`IsTraceOf`: true
 
 ## Verdict
 
-> Fill in after running.
+**Claim:** not supported
+**Criteria met:** 1/4
 
-**Claim:** [ supported / not supported / trade-off ]
-**Criteria met:** [ /4 ]
+| Criterion | Threshold | Actual Δ rank | Met? |
+|-----------|-----------|---------------|------|
+| C1 — Structural Patterns up ≥5 ranks | +5 | −1 | ✗ |
+| C2 — Dev-Workflow Patterns up ≥3 ranks | +3 | 0 | ✗ |
+| C3 — Self-Healing Nodes down ≥2 ranks | −2 | 0 | ✗ |
+| C4 — IsTraceOf = true | — | true | ✓ |
 
 ## Interpretation
 
-> Fill in after running.
+The claim is not supported by the results. The mathematical apparatus works correctly
+(C4 holds; the stationary consistency theorem is verified), but the structural
+predictions were wrong. The root cause is an inconsistency in the hypothesis itself.
+
+**Why Structural Patterns did not rise:**
+The hypothesis argued that Structural Patterns would gain inbound flow from the 10
+planned example pages it catalogues. But the hypothesized out-edges for those pages
+(see §Graph B) route exclusively to `markov-chain-foundations`, `pda-triplet-model`,
+`catrace-api`, `agentic-patterns-catalogue`, `trace-chain`, `joint-kernels-and-coupling`,
+and `variant-comparison-methodology` — none of them point back to `structural-patterns`.
+The narrative ("it would have the highest in-degree in the full wiki") was not reflected
+in the specified link structure. Because the trace correctly accounts for where flow
+actually goes, Structural Patterns *loses* a rank position: its row now has 16 out-edges
+instead of 6 (diluting each individual probability) while gaining no new inbound paths.
+
+**Why Self-Healing Nodes did not fall:**
+Variant Comparison Methodology still has exactly one out-edge (to Self-Healing Nodes).
+Adding 6 D-pages that link *to* VCM increases VCM's absolute weight in the trace, but
+VCM's row remains a point mass on Self-Healing Nodes — concentration is preserved, not
+corrected.
+
+**What the trace did correct:**
+The planned pages collectively send heavy flow to `markov-chain-foundations`,
+`pda-triplet-model`, `catrace-api`, and `agentic-patterns-catalogue`, all of which
+rise modestly. The trace absorbs the hidden excursion and reflects that these
+foundational pages are the true convergence targets of the planned content.
+
+**Fix for a follow-up experiment:**
+To test the original intuition, planned-page out-edges should include back-links to
+`structural-patterns` and `dev-workflow-patterns` (as a real wiki page would have).
+With those edges in place, the predictions in §Predictions would likely hold.
 
 ## Implementation notes
 
