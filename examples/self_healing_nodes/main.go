@@ -45,6 +45,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"strings"
 
 	catrace "github.com/stephen-mcelhose/catrace"
@@ -54,6 +55,7 @@ import (
 // scenario holds the two parameters that differ between variants.
 type scenario struct {
 	name string
+	slug string // used as the HTML filename prefix
 	// nodeA: action → world for the node (3×3, push/throttle/idle → healthy/degraded/overloaded)
 	nodeA [3][3]float64
 	// mutationBoost: extra probability of healthy added to nodeA rows when evolver mutates
@@ -64,6 +66,7 @@ func main() {
 	variants := []scenario{
 		{
 			name: "Variant A — throttle does it all",
+			slug: "variant_a",
 			// Throttle is a strong recovery action: self-healing built into the node.
 			// Mutation boost is tiny — the evolver barely changes the picture.
 			nodeA: [3][3]float64{
@@ -75,6 +78,7 @@ func main() {
 		},
 		{
 			name: "Variant B — evolver matters",
+			slug: "variant_b",
 			// Throttle is weak: the node can't reliably self-heal by slowing down alone.
 			// Mutation boost is large — finding a better config is the real recovery path.
 			nodeA: [3][3]float64{
@@ -299,6 +303,24 @@ func runScenario(v scenario) {
 	if est.Kernel != nil {
 		fmt.Printf("\nEmpirical trace (500-step sample):\n")
 		fmt.Printf("%v\n", mat.Formatted(est.Kernel.P, mat.Prefix("  ")))
+	}
+
+	for _, kv := range []struct {
+		k     *catrace.Kernel
+		title string
+		file  string
+	}{
+		{J, v.name + " — joint world kernel J (6 states)", "self_healing_nodes_J_" + v.slug + ".html"},
+		{traceExtreme, v.name + " — trace onto {H·G, O·B}", "self_healing_nodes_trace_" + v.slug + ".html"},
+	} {
+		html, err := kv.k.ToHTML(&catrace.VisualiseOptions{Title: kv.title})
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := os.WriteFile(kv.file, html, 0o644); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Wrote %s\n", kv.file)
 	}
 }
 
