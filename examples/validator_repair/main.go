@@ -47,6 +47,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 
 	"github.com/stephen-mcelhose/catrace"
 	"gonum.org/v1/gonum/mat"
@@ -326,5 +327,25 @@ func main() {
 	if est.Kernel != nil {
 		fmt.Println("=== Empirical trace kernel (200-step sample, filtered to {VV,II}) ===")
 		fmt.Printf("%v\n", mat.Formatted(est.Kernel.P, mat.Prefix("  ")))
+	}
+
+	for _, kv := range []struct {
+		k     *catrace.Kernel
+		title string
+		file  string
+	}{
+		{workerW, "Validator Repair — Worker world kernel W₁", "validator_repair_worker_W.html"},
+		{validatorW, "Validator Repair — Validator world kernel W₂", "validator_repair_validator_W.html"},
+		{J, "Validator Repair — joint world kernel J (4 states)", "validator_repair_J.html"},
+		{traceCoarse, "Validator Repair — trace onto {VV, II}", "validator_repair_trace.html"},
+	} {
+		html, err := kv.k.ToHTML(&catrace.VisualiseOptions{Title: kv.title})
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := os.WriteFile(kv.file, html, 0o644); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Wrote %s\n", kv.file)
 	}
 }
