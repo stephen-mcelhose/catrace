@@ -40,6 +40,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 
 	"github.com/stephen-mcelhose/catrace"
 	"gonum.org/v1/gonum/mat"
@@ -116,4 +117,22 @@ func main() {
 		fmt.Printf("%v\n", mat.Formatted(est.Kernel.P, mat.Prefix("  ")))
 	}
 	fmt.Printf("windowed estimates computed: %d\n", len(windows))
+
+	for _, kv := range []struct {
+		k     *catrace.Kernel
+		title string
+		file  string
+	}{
+		{parent, "Trace Analysis — parent kernel (4 states)", "trace_analysis_parent.html"},
+		{trace, "Trace Analysis — trace kernel on {A_valid, A_invalid}", "trace_analysis_trace.html"},
+	} {
+		html, err := kv.k.ToHTML(&catrace.VisualiseOptions{Title: kv.title})
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := os.WriteFile(kv.file, html, 0o644); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Wrote %s\n", kv.file)
+	}
 }
