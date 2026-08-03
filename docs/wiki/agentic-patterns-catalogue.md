@@ -62,6 +62,8 @@ Every pattern is expressed as a [[PDA Triplet Model]] over appropriate state spa
 
 For multi-agent patterns, decisions are always independent (Kronecker product D_joint = D₁⊗D₂); coupling enters only in perception (P_joint) and action effects (A_joint). See [[Joint Kernels and Coupling]].
 
+When comparing two design choices that share the same topology, use the [[Variant Comparison Methodology]]: encode each choice as a parameter regime and let the Markov chain metrics vote.
+
 ## Sources
 
 - `docs/patterns/agentic-patterns-reference.md`

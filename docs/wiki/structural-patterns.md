@@ -151,7 +151,7 @@ Structural patterns describe how agents are connected and how they coordinate, i
 
 **catrace model:** The richest implemented pattern. See [[Example: Validator Repair]] (two-agent explicit coupling) and [[Example: Self-Healing Nodes]] (variant comparison: which loop carries the load?). Coupling enters through perception (monitor observes operational agent's world state) and action (monitor's repair restores operational agent's state).
 
-**Key catrace insight — variant comparison:** Run the same joint kernel architecture under two parameter regimes; read the difference in stationary distribution, MFPT, and entropy rate to determine which mechanism carries the recovery load. This is catrace's unique contribution as a measuring instrument for architectural claims.
+**Key catrace insight — variant comparison:** Run the same joint kernel architecture under two parameter regimes; read the difference in stationary distribution, MFPT, and entropy rate to determine which mechanism carries the recovery load. See [[Variant Comparison Methodology]] for the general technique and hypothesis template.
 
 **Implemented:** `examples/validator_repair`, `examples/self_healing_nodes`.
 

@@ -92,7 +92,7 @@ This example shows catrace as a **measuring instrument for architectural claims*
 3. Read stationary distribution, MFPT, entropy rate
 4. The numbers say which claim the model supports
 
-The technique generalizes to any design question expressible as "parameter X vs. Y in the same topology." See [[Structural Patterns]] §14 for the general pattern description.
+The formalized hypothesis record for this comparison lives in `experiments/nodes-throttle-vs-evolver/hypothesis.md`. The general methodology — including the hypothesis template and guidance on well-formed claims — is documented in [[Variant Comparison Methodology]].
 
 ## Connection to math and API
 

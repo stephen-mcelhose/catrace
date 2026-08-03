@@ -9,7 +9,7 @@ updated: 2026-08-02
 
 These four patterns are specializations of [[Structural Patterns]] for AI coding and development agent loops. Each inherits from one or more structural parents but has a specific semantic meaning in the development context.
 
-All four are planned catrace examples (not yet implemented). They are most naturally analyzed via [[Markov Chain Foundations]] metrics: MFPT from start to completion, stationary distribution over review/revision states, and entropy rate as a measure of predictability.
+All four are planned catrace examples (not yet implemented). They are most naturally analyzed via [[Markov Chain Foundations]] metrics: MFPT from start to completion, stationary distribution over review/revision states, and entropy rate as a measure of predictability. Any two sub-patterns that share a topology (e.g., D2 vs D3) are natural candidates for [[Variant Comparison Methodology]].
 
 ---
 

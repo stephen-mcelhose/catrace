@@ -49,3 +49,18 @@ index.md updated: 13 pages catalogued
 ## [2026-08-02] lint | 13 pages checked, 0 issues found, 0 fixed
 
 All pages have frontmatter (title, tags, sources, updated). All wikilinks resolve to existing pages. Index complete. No orphans, contradictions, or stale claims detected. No missing cross-references found.
+
+---
+
+## [2026-08-02] new | variant-comparison-methodology.md
+
+Promoted the variant comparison technique from a section inside example-self-healing-nodes.md to a first-class wiki page.
+
+Pages written: variant-comparison-methodology.md
+Propagated to: example-self-healing-nodes.md, structural-patterns.md, agentic-patterns-catalogue.md, dev-workflow-patterns.md
+index.md updated: 14 pages catalogued
+
+Experiment scaffold added (outside wiki root, in experiments/):
+- experiments/README.md
+- experiments/hypothesis-template.md
+- experiments/nodes-throttle-vs-evolver/hypothesis.md (worked example, Verdict: supported 4/4 metrics)
