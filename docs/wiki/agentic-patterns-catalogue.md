@@ -19,7 +19,7 @@ These describe *how agents are connected and coordinate*, independent of domain.
 |---|---------|----------|-----------------|-------|--------|
 | 1 | Augmented LLM | Single node | `simple_agent` | [[Example: Simple Agent]] | ✅ Implemented |
 | 2 | Prompt Chaining | Linear pipeline | — | [[Structural Patterns]] | 🔲 Planned |
-| 3 | Routing | Hub-and-spoke | — | [[Structural Patterns]] | 🔲 Planned |
+| 3 | Routing | Hub-and-spoke | `routing` | [[Example: Routing Agent]] | ✅ Implemented |
 | 4 | Parallelisation / Fan-out | Fork-join | — | [[Structural Patterns]] | 🔲 Planned |
 | 5 | Orchestrator-Workers | Centralised hub | — | [[Structural Patterns]] | 🔲 Planned |
 | 6 | Evaluator-Optimizer | Iterative loop | `validator_repair` (partial) | [[Example: Validator Repair]] | ✅ Implemented |

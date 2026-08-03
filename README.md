@@ -146,6 +146,57 @@ A four-stage workflow handles incoming work. Local fixes are fast but unreliable
 
 [Full story, state meanings, and interpretation →](docs/patterns/story-prompt-chaining.md)
 
+### 7. Routing agent
+
+Story:
+
+A customer support system receives tickets of genuinely different types — billing disputes, technical faults, and general enquiries — but the router agent can only read the ticket text, not the underlying truth. Misclassification sends a ticket to the wrong specialist, who cannot resolve it and re-queues it, often as an apparently different type. The tension is between classification accuracy and the cost of a wrong route: a confident wrong decision causes a longer misrouting loop than an uncertain escalation to human triage.
+
+- world states: `billing_ticket`, `technical_ticket`, `general_ticket` — the true nature of the incoming request
+- experience states: `reads_billing`, `reads_technical`, `reads_general` — the router's perceived classification
+- actions: `route_billing`, `route_technical`, `route_general`, `escalate_human` — where the router sends the ticket
+
+Interpretation:
+
+- perception captures classification accuracy — diagonal entries are correct reads; off-diagonal entries encode misclassification probability
+- decision captures the routing policy given perceived type, including the rate of escalation to human triage regardless of perceived classification
+- action captures how the routing choice changes the world state: a correct route resolves the ticket and draws the next from the same pool; a wrong route re-enters the ticket as an apparently different type
+- the stationary distribution shows the steady-state mix of ticket types in the queue, including misrouted tickets that have cycled through the wrong specialist
+- MFPT between ticket types measures misrouting loop latency
+
+Code: `examples/routing/main.go` — walkthrough at `examples/routing/WALKTHROUGH.md`
+
+#### Played-out version: Story 7
+
+**Version A: statistically typical path**
+
+1. World state `technical_ticket` (37.2% of steady-state — the most common queue type)
+2. P[`technical_ticket`, `reads_technical`] = 0.80 → router correctly perceives `reads_technical`
+3. D[`reads_technical`, `route_technical`] = 0.80 → router sends to technical specialist
+4. A[`route_technical`, `technical_ticket`] = 0.70 → ticket resolved; next is technical (0.80 × 0.80 × 0.70 = 0.448)
+
+This path contributes the bulk of W[`technical_ticket`, `technical_ticket`] = 0.533. In plain English: a technical ticket is correctly identified, resolved, and another technical ticket arrives.
+
+**Version B: misrouting loop**
+
+1. World state `billing_ticket` — genuine billing dispute arrives
+2. P[`billing_ticket`, `reads_technical`] = 0.15 → router misreads it as technical
+3. D[`reads_technical`, `route_technical`] = 0.80 → router sends to technical specialist
+4. A[`route_technical`, `billing_ticket`] = 0.15 → specialist cannot resolve it; re-enters as billing (0.15 × 0.80 × 0.15 = 0.018)
+
+This path contributes to W[`billing_ticket`, `billing_ticket`] via the wrong-route direction. In plain English: a billing ticket is misclassified as technical, the technical specialist cannot help, and the ticket wastes one full cycle before returning to the billing queue.
+
+**Version C: escalation recovery**
+
+1. World state `general_ticket` — general enquiry arrives
+2. P[`general_ticket`, `reads_billing`] = 0.10 → router misreads it as billing
+3. D[`reads_billing`, `escalate_human`] = 0.10 → router escalates rather than routes
+4. A[`escalate_human`, `general_ticket`] = 0.33 → human resolves it correctly (0.10 × 0.10 × 0.33 = 0.0033)
+
+This path contributes to W[`general_ticket`, `general_ticket`] via the escalation route. In plain English: a misread ticket is caught by escalation — the human resolves it regardless of type, at the cost of one escalation cycle rather than a misrouting loop.
+
+Across all three paths: technical tickets dominate the queue (37.2%) because they are classified most accurately. The MFPT billing→technical (3.55 steps) is a direct measure of how long the misrouting loop runs — reduce off-diagonal entries in P and this number grows, confirming better routing.
+
 ## Tests and examples
 
 The intended style for this project is:
