@@ -95,3 +95,11 @@ Issues found and fixed:
 - **variant-comparison-methodology.md**: only referenced nodes-throttle-vs-evolver; added "Pending experiments" table for spectral-gap-mixing-time (#25), stationary-sensitivity (#26), n-agent-scalability
 
 No orphans. No contradictions. No index gaps.
+
+---
+
+## [2026-08-05] ingest | examples/routing/WALKTHROUGH.md
+
+Pages written: example-routing.md
+Propagated to: agentic-patterns-catalogue.md (pattern 3 marked implemented, example link added)
+index.md updated: 16 pages catalogued
