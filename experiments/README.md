@@ -26,6 +26,7 @@ Experiments are distinct from examples. An **example** (`examples/`) demonstrate
 | Slug | Claim | Status | Verdict |
 |------|-------|--------|---------|
 | [nodes-throttle-vs-evolver](nodes-throttle-vs-evolver/hypothesis.md) | Node throttle is primary recovery mechanism; evolver contributes but is not essential | Complete | Supported (3/3 metrics) |
+| [wiki-knowledge-graph](wiki-knowledge-graph/hypothesis.md) | Trace chain corrects importance distortion caused by missing wiki pages | Pending | — |
 
 ## Methodology
 
