@@ -80,9 +80,9 @@ func main() {
 		D:      D,
 		A:      A,
 		P:      P,
-		XNames: []string{"looks_routine", "looks_risky"},
+		XNames: []string{"looks: routine", "looks: risky"},
 		GNames: []string{"answer", "clarify", "escalate"},
-		WNames: []string{"task_routine", "task_complex"},
+		WNames: []string{"world: routine", "world: complex"},
 	}
 
 	Q, err := agent.QualiaKernel()
