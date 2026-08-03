@@ -184,3 +184,9 @@ The discipline matters because it changes what a surprising result means. If you
 the prediction first and the numbers go the other way, you've learned something.
 If you write the interpretation after seeing the numbers, you've explained something —
 which is not the same thing.
+
+---
+
+## Interested?
+
+If anything here caught your attention, let me know — happy to walk through it.
