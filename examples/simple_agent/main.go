@@ -43,6 +43,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/stephen-mcelhose/catrace"
 	"gonum.org/v1/gonum/mat"
@@ -79,9 +80,9 @@ func main() {
 		D:      D,
 		A:      A,
 		P:      P,
-		XNames: []string{"looks_routine", "looks_risky"},
+		XNames: []string{"looks: routine", "looks: risky"},
 		GNames: []string{"answer", "clarify", "escalate"},
-		WNames: []string{"task_routine", "task_complex"},
+		WNames: []string{"world: routine", "world: complex"},
 	}
 
 	Q, err := agent.QualiaKernel()
@@ -127,4 +128,22 @@ func main() {
 	fmt.Printf("left_action([1,0], Q) = %.6f %.6f\n", next[0], next[1])
 	fmt.Printf("recurrent classes = %v\n", classes.Recurrent)
 	fmt.Printf("transient states = %v\n", classes.Transient)
+
+	for _, kv := range []struct {
+		k     *catrace.Kernel
+		title string
+		file  string
+	}{
+		{Q, "Simple Agent — Q kernel (experience → experience)", "simple_agent_Q.html"},
+		{W, "Simple Agent — W kernel (world → world)", "simple_agent_W.html"},
+	} {
+		html, err := kv.k.ToHTML(&catrace.VisualiseOptions{Title: kv.title})
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := os.WriteFile(kv.file, html, 0o644); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Wrote %s\n", kv.file)
+	}
 }
