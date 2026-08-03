@@ -55,15 +55,27 @@ A poorly-formed hypothesis:
 - Has no metric that could distinguish the variants
 - Is stated after seeing the results
 
-## The worked example: throttle vs. evolver
+## Completed experiments
 
-See [[Example: Self-Healing Nodes]] for the full analysis and `experiments/nodes-throttle-vs-evolver/hypothesis.md` for the formalized experiment record.
+### nodes-throttle-vs-evolver — Supported (4/4 metrics)
+
+See [[Example: Self-Healing Nodes]] for the full analysis and `experiments/nodes-throttle-vs-evolver/hypothesis.md` for the formalized record.
 
 **Claim:** The node's throttle action is the primary recovery mechanism; the evolver contributes but is not essential.
 
-**Result:** All three metrics (π, MFPT, H) supported the claim. Variant A (strong throttle) produced a healthier, faster-recovering, more legible system than Variant B (strong evolver, weak throttle).
+**Result:** All four metrics (π, MFPT, H, π_trace) supported the claim. Variant A (strong throttle) produced a healthier, faster-recovering, more legible system than Variant B (strong evolver, weak throttle).
 
 **What the split would have looked like:** If π(H·G) favored A but MFPT favored B, the correct interpretation would be: "throttle keeps the system healthier on average, but when things go badly wrong, random mutation search recovers faster from the worst state." That is a genuine architectural trade-off — not a failure of the methodology.
+
+### wiki-knowledge-graph — Not supported (1/4 criteria)
+
+See `experiments/wiki-knowledge-graph/hypothesis.md` for the formalized record.
+
+**Claim:** Trace chain correction of the catrace wiki graph (treating 14 planned pages as hidden states) would substantially rerank structurally important pages relative to a naive 14-node PageRank.
+
+**Result:** Only 1 of 4 structural criteria was met. The mathematical identity (`IsTraceOf = true`) held — the stationary consistency theorem is exact. But the predicted rank shifts for `Structural Patterns` and `Dev-Workflow Patterns` did not materialise at the required magnitudes.
+
+**What this means for the methodology:** A "not supported" verdict is not a failure — it is information. The specific graph structure of this incomplete wiki produced smaller correction effects than predicted. The technique is sound; the claim about this particular graph was wrong. A revised hypothesis might lower the required rank-shift thresholds, or model the planned pages with different assumed link distributions.
 
 ## Generalizing to other patterns
 
@@ -86,15 +98,16 @@ The `experiments/` directory is where these comparisons live, separate from the 
 
 ## Pending experiments
 
-Three further experiments are filed and awaiting runs:
+Four further experiments are filed and awaiting runs:
 
 | Slug | Claim | Issue |
 |------|-------|-------|
+| `kg-grounding-agent-behavior` | Knowledge graph quality systematically shifts agent behavior — a well-structured graph raises π(understood), lowers MFPT to recovery, and reduces entropy rate; only the Perception kernel P changes between variants | — |
 | `spectral-gap-mixing-time` | Spectral gap (1 − \|λ₂\|) rank-orders kernels correctly by empirical mixing speed; a kernel with 2× the spectral gap mixes in roughly half the steps | #25 |
 | `stationary-sensitivity` | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution; low-π rows have negligible effect | #26 |
 | `n-agent-scalability` | The trace chain restores tractability for N-agent networks: a joint kernel built over k^N states can be collapsed to a small observable subset without losing stationary consistency | — |
 
-These experiments extend the methodology beyond single-system variant comparison into **measurement** (spectral gap, sensitivity) and **scale** (N-agent trace collapse). The hypothesis files are in `experiments/<slug>/hypothesis.md`.
+These experiments extend the methodology into **perception quality** (kg-grounding), **measurement** (spectral gap, sensitivity), and **scale** (N-agent trace collapse). The hypothesis files are in `experiments/<slug>/hypothesis.md`.
 
 ## Sources
 

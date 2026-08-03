@@ -69,6 +69,26 @@ Experiment scaffold added (outside wiki root, in experiments/):
 
 ## [2026-08-03] lint | 17 pages checked, 4 issues found, 4 fixed
 
+---
+
+## [2026-08-04] ingest | experiments/README.md
+
+Pages written: experiment-registry.md
+Propagated to: variant-comparison-methodology.md (worked example section expanded to "Completed experiments" with wiki-knowledge-graph not-supported result added), trace-chain.md (wiki-knowledge-graph experiment note added referencing [[Experiment Registry]])
+index.md updated: 15 pages catalogued
+
+---
+
+## [2026-08-04] lint | 14 pages checked, 3 issues found, 3 fixed
+
+Issues found and fixed:
+- **variant-comparison-methodology.md**: "All three metrics (π, MFPT, H)" was stale — the `nodes-throttle-vs-evolver` hypothesis.md records four metrics (π, MFPT, H, π_trace); updated to "All four metrics"
+- **variant-comparison-methodology.md**: Pending experiments table listed 3 entries; `kg-grounding-agent-behavior` (just filed) was missing; added as first row; updated count from "Three" to "Four"; updated summary sentence
+- **pda-triplet-model.md**: P(w,x) entry had no reference to the knowledge-graph-grounding use case; added note that for knowledge-grounded agents, P is shaped by KG coverage/connectivity, with cross-reference to kg-grounding experiment and [[Variant Comparison Methodology]]
+
+Unfixable (outside wiki scope):
+- `experiments/README.md` records `nodes-throttle-vs-evolver` as "Supported (3/3 metrics)" — contradicts hypothesis.md (4/4) and this wiki (now 4); requires fix in experiments/README.md directly
+
 Issues found and fixed:
 - **catrace-api.md**: missing `graph.go` (NewRandomWalkKernel) and `visualise.go` (ToHTML) from package layout table; both added with method documentation sections
 - **markov-chain-foundations.md**: AGENTS.md domain lists "spectral theory, mixing" but page had no content on it; added "Spectral gap and mixing time" section (spectral gap definition, mixing time bound, total variation distance, link to pending experiment #25)

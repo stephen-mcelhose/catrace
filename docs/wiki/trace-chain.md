@@ -58,6 +58,8 @@ Every example demonstrates trace in a different context:
 
 In all three cases, `IsTraceOf = true` confirms the analytical trace matches what would be observed empirically in a long simulation.
 
+The `wiki-knowledge-graph` experiment (see [[Experiment Registry]]) applied the trace chain to the catrace wiki's own page-link graph, treating 14 planned pages as hidden states and 14 existing pages as the observed subset. `IsTraceOf = true` held — the stationary consistency theorem was confirmed. However, the structural claim that trace correction would substantially rerank existing pages was not supported (1/4 criteria met). The mathematical technique is exact; the predicted effect size on this particular graph was wrong.
+
 ## Sampling and estimation
 
 catrace also provides empirical trace tools:

@@ -40,7 +40,7 @@ Because Q, S, and W represent the same loop from different perspectives, their s
 
 The kernel entries have direct semantic meaning:
 
-- **P(w, x)** — given the world is in state w, the probability the agent perceives/interprets it as experience x. High off-diagonal entries encode perception noise.
+- **P(w, x)** — given the world is in state w, the probability the agent perceives/interprets it as experience x. High off-diagonal entries encode perception noise. For a knowledge-grounded agent, P is shaped by the coverage and connectivity of its knowledge graph — a well-structured graph lowers off-diagonal entries, a sparse one raises them. This is the subject of the pending `experiments/kg-grounding-agent-behavior` experiment; see [[Variant Comparison Methodology]].
 - **D(x, g)** — given the agent's experience is x, the probability it chooses action g. This is the policy.
 - **A(g, w')** — given the agent takes action g, the probability the world moves to state w'. This encodes causal consequence.
 
