@@ -140,12 +140,12 @@ func runScenario(v scenario) {
 
 	// ── Joint state names ─────────────────────────────────────────────────
 
-	jointWNames := []string{"H·G", "H·B", "D·G", "D·B", "O·G", "O·B"}
-	jointXNames := []string{"low·hi", "low·lo", "mid·hi", "mid·lo", "hi·hi", "hi·lo"}
+	jointWNames := []string{"healthy · good cfg", "healthy · bad cfg", "degraded · good cfg", "degraded · bad cfg", "overload · good cfg", "overload · bad cfg"}
+	jointXNames := []string{"ema:low · score:hi", "ema:low · score:lo", "ema:mid · score:hi", "ema:mid · score:lo", "ema:hi · score:hi", "ema:hi · score:lo"}
 	jointGNames := []string{
-		"push·promote", "push·mutate",
-		"thr·promote", "thr·mutate",
-		"idle·promote", "idle·mutate",
+		"push · promote", "push · mutate",
+		"throttle · promote", "throttle · mutate",
+		"idle · promote", "idle · mutate",
 	}
 
 	// ── P_joint (6×6) ── COUPLING 1: evolver score depends on node health ─
@@ -288,7 +288,7 @@ func runScenario(v scenario) {
 
 	fmt.Println("\nStationary distribution:")
 	for i, p := range piJ {
-		fmt.Printf("  %-6s %.4f\n", jointWNames[i], p)
+		fmt.Printf("  %-20s %.4f\n", jointWNames[i], p)
 	}
 
 	fmt.Printf("\nMFPT O·B → H·G (worst→best) = %.2f steps\n", mfptWorstBest)
