@@ -68,8 +68,8 @@ This matches the printed matrix exactly.
 
 Rows are starting stage; columns are next stage (raw, extracted, summarised,
 formatted, failed). Notice that no row has a high self-loop — the pipeline
-always moves. `formatted` row (row 4): 0.096 chance of immediately moving back
-to `extracted`, meaning a formatted document re-enters the pipeline as new input.
+always moves. `formatted` row (row 4): 0.096 chance of cycling back
+to `raw`, meaning a formatted document re-enters the pipeline as a fresh input at the earliest stage.
 
 ```
 stationary(W)        = 0.123115  0.296395  0.266709  0.165227  0.148554
@@ -95,11 +95,20 @@ stationary(W)|{raw,fmt,fail} norm= 0.281795  0.378183  0.340022
 stationary(trace)               = 0.281795  0.378183  0.340022
 ```
 
-Collapsing `extracted` and `summarised` into implicit hidden states reveals the
-coarse pipeline health: 37.8% of end-state visits are `formatted` (success),
-34.0% are `failed`. `IsTraceOf = true` confirms the 3-state trace is the exact
-effective kernel — not an approximation. The stationary of the trace matches the
-parent's stationary restricted and normalised to {`raw`, `formatted`, `failed`}.
+Collapsing `extracted` and `summarised` into hidden states reveals the coarse
+pipeline health: the stationary mass at the coarse checkpoints is 37.8%
+`formatted` vs 34.0% `failed`. This is the long-run fraction of time the
+pipeline spends at each visible stage — not a per-document pass rate, but a
+measure of how often the system is observed in each outcome. `IsTraceOf = true`
+confirms the 3-state kernel is the exact effective kernel — not an
+approximation. The stationary of the trace matches the parent's stationary
+restricted and normalised to {`raw`, `formatted`, `failed`}.
+
+---
+
+## A note on the A matrix
+
+A is a memoryless kernel — it maps action to *next* world state without knowing the current stage. `A[process, raw] = 0.05` does not mean "processing sends the current document back to raw." It means that across all pipeline positions, the `process` action produces a `raw`-stage world state 5% of the time — capturing the arrival of new raw documents after a cycle completes. The stage-to-stage advancement emerges from the full W = P·D·A composition, not from A alone.
 
 ---
 
