@@ -234,17 +234,25 @@ const piMin = Math.min(...piVals), piMax = Math.max(...piVals);
 const piRange = piMax - piMin || 1;
 function nodeR(pi) { return 8 + 20 * (pi - piMin) / piRange; }
 
-// Self-loops and regular edges separated
+// Separate self-loops (never passed to forceLink, so source/target stay as IDs)
+// and regular directed edges (passed to forceLink, which resolves IDs → node objects)
 const selfLoops = rawEdges.filter(e => e.source === e.target);
 const dirEdges  = rawEdges.filter(e => e.source !== e.target);
+
+// Pre-position nodes in a circle so the simulation starts centred, not at origin
+const r0 = Math.min(W, H) * 0.32;
+rawNodes.forEach((d, i) => {
+  d.x = W / 2 + r0 * Math.cos(2 * Math.PI * i / rawNodes.length);
+  d.y = H / 2 + r0 * Math.sin(2 * Math.PI * i / rawNodes.length);
+});
 
 const svg = d3.select("#svg");
 const g   = svg.append("g");
 
 // Zoom/pan
-svg.call(d3.zoom().scaleExtent([0.15, 5]).on("zoom", ev => g.attr("transform", ev.transform)));
+const zoom = d3.zoom().scaleExtent([0.1, 6]).on("zoom", ev => g.attr("transform", ev.transform));
+svg.call(zoom);
 
-// Arrow markers — one per opacity bucket to avoid re-coloring SVG markers
 const markerColour = "#8899bb";
 g.append("defs").append("marker")
   .attr("id", "arrow")
@@ -256,17 +264,15 @@ g.append("defs").append("marker")
     .attr("d", "M0,-4L8,0L0,4")
     .attr("fill", markerColour);
 
-// Edge layer
 const linkLayer = g.append("g").attr("class", "links");
 const loopLayer = g.append("g").attr("class", "loops");
 const nodeLayer = g.append("g").attr("class", "nodes");
 
 const tooltip = d3.select("#tooltip");
 
-// Nodes map for lookup
-const nodeMap = Object.fromEntries(rawNodes.map(d => [d.id, d]));
-
 // --- Draw directed edges ---
+// NOTE: forceLink mutates dirEdges so that d.source / d.target become node objects.
+// All edge callbacks must use d.source.x etc., not rawNodes[d.source].
 const link = linkLayer.selectAll("path")
   .data(dirEdges)
   .join("path")
@@ -276,15 +282,16 @@ const link = linkLayer.selectAll("path")
     .attr("stroke-opacity", d => 0.25 + 0.65 * d.value)
     .attr("marker-end", "url(#arrow)")
     .on("mouseover", (ev, d) => {
-      const sn = nodeMap[d.source]?.name ?? d.source;
-      const tn = nodeMap[d.target]?.name ?? d.target;
+      // After forceLink resolves, d.source and d.target are node objects
+      const sn = d.source.name ?? d.source;
+      const tn = d.target.name ?? d.target;
       tooltip.style("display","block")
         .text("P(" + sn + " → " + tn + ") = " + d.value.toFixed(4));
     })
     .on("mousemove", ev => tooltip.style("left",(ev.pageX+14)+"px").style("top",(ev.pageY-28)+"px"))
     .on("mouseout", () => tooltip.style("display","none"));
 
-// --- Draw self-loops ---
+// --- Draw self-loops (source/target remain integer IDs — not passed to forceLink) ---
 const loop = loopLayer.selectAll("path")
   .data(selfLoops)
   .join("path")
@@ -293,9 +300,9 @@ const loop = loopLayer.selectAll("path")
     .attr("stroke-width", d => 0.8 + 4 * d.value)
     .attr("stroke-opacity", d => 0.25 + 0.65 * d.value)
     .on("mouseover", (ev, d) => {
-      const sn = nodeMap[d.source]?.name ?? d.source;
+      const n = rawNodes[d.source];
       tooltip.style("display","block")
-        .text("P(" + sn + " → " + sn + ") = " + d.value.toFixed(4));
+        .text("P(" + n.name + " → " + n.name + ") = " + d.value.toFixed(4));
     })
     .on("mousemove", ev => tooltip.style("left",(ev.pageX+14)+"px").style("top",(ev.pageY-28)+"px"))
     .on("mouseout", () => tooltip.style("display","none"));
@@ -314,8 +321,9 @@ node.append("circle")
   .attr("r", d => nodeR(d.pi))
   .attr("fill", nodeColour)
   .on("mouseover", (ev, d) => {
-    const outEdges = dirEdges.filter(e => e.source === d.id);
-    const lines = ["State: " + d.name, "π = " + d.pi.toFixed(5), "out-edges: " + outEdges.length];
+    // dirEdges source/target are now node objects — compare by id
+    const outCount = dirEdges.filter(e => (e.source.id ?? e.source) === d.id).length;
+    const lines = ["State: " + d.name, "π = " + d.pi.toFixed(5), "out-edges: " + outCount];
     tooltip.style("display","block").text(lines.join("\n"));
   })
   .on("mousemove", ev => tooltip.style("left",(ev.pageX+14)+"px").style("top",(ev.pageY-28)+"px"))
@@ -326,47 +334,66 @@ node.append("text")
   .text(d => d.name);
 
 // --- Force simulation ---
+// Stop first so we can pre-warm before first render.
 const sim = d3.forceSimulation(rawNodes)
   .force("link", d3.forceLink(dirEdges)
     .id(d => d.id)
     .distance(d => 80 + 120 * (1 - d.value))
     .strength(d => 0.3 + 0.5 * d.value))
-  .force("charge", d3.forceManyBody().strength(-350))
+  .force("charge", d3.forceManyBody().strength(-400))
   .force("center", d3.forceCenter(W/2, H/2))
-  .force("collision", d3.forceCollide().radius(d => nodeR(d.pi) + 12))
-  .on("tick", ticked);
+  .force("collision", d3.forceCollide().radius(d => nodeR(d.pi) + 14))
+  .stop();
 
-// Path generator for curved directed edges
-// Two edges A→B and B→A get opposite curvature; single-direction edges get slight curvature.
-const edgePairs = new Set(
-  dirEdges.map(e => [Math.min(e.source,e.target), Math.max(e.source,e.target)].join(","))
-);
-function isBidirectional(e) {
-  return dirEdges.some(f => f.source === e.target && f.target === e.source);
+// Pre-warm: run simulation steps synchronously so the first frame is already settled
+const warmSteps = Math.ceil(Math.log(sim.alphaMin()) / Math.log(1 - sim.alphaDecay()));
+for (let i = 0; i < Math.min(warmSteps, 300); i++) sim.tick();
+ticked(); // paint the pre-warmed positions immediately
+
+// Then restart for gentle live settling + drag interactivity
+sim.on("tick", ticked).alpha(0.05).restart();
+
+// Fit the pre-warmed graph to the viewport on load
+function fitGraph() {
+  const bounds = g.node().getBBox();
+  if (!bounds.width || !bounds.height) return;
+  const pad = 40;
+  const scale = Math.min(
+    (W - pad*2) / bounds.width,
+    (H - pad*2) / bounds.height,
+    1.5
+  );
+  const tx = W/2 - scale * (bounds.x + bounds.width/2);
+  const ty = H/2 - scale * (bounds.y + bounds.height/2);
+  svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+}
+setTimeout(fitGraph, 50); // after first paint
+
+// --- Path generators ---
+
+function isBidirectional(d) {
+  // d.source / d.target are node objects after forceLink
+  return dirEdges.some(f => f.source.id === d.target.id && f.target.id === d.source.id);
 }
 
 function edgePath(d) {
-  const s = rawNodes[d.source], t = rawNodes[d.target];
+  // d.source and d.target are node objects (mutated by forceLink)
+  const s = d.source, t = d.target;
   const dx = t.x - s.x, dy = t.y - s.y;
   const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-  const tr = nodeR(t.pi) + 7; // target radius + arrow gap
-  // unit vector
   const ux = dx/dist, uy = dy/dist;
-  // end point: just outside target circle
-  const ex = t.x - ux*tr, ey = t.y - uy*tr;
-  // start point: just outside source circle
   const sr = nodeR(s.pi);
-  const sx = s.x + ux*sr, sy = s.y + uy*sr;
-  // curvature: bidirectional edges curve opposite ways
+  const tr = nodeR(t.pi) + 7; // +7 for arrowhead gap
+  const sx = s.x + ux*sr,  sy = s.y + uy*sr;
+  const ex = t.x - ux*tr,  ey = t.y - uy*tr;
+
   if (isBidirectional(d)) {
     const curve = dist * 0.25;
-    // perpendicular
     const px = -uy*curve, py = ux*curve;
-    const sign = d.source < d.target ? 1 : -1;
+    const sign = d.source.id < d.target.id ? 1 : -1;
     const cx = (sx+ex)/2 + sign*px, cy = (sy+ey)/2 + sign*py;
     return "M"+sx+","+sy+" Q"+cx+","+cy+" "+ex+","+ey;
   }
-  // single direction: very slight curve to avoid overlapping node labels
   const curve = dist * 0.08;
   const px = -uy*curve, py = ux*curve;
   const cx = (sx+ex)/2 + px, cy = (sy+ey)/2 + py;
@@ -374,11 +401,14 @@ function edgePath(d) {
 }
 
 function selfLoopPath(d) {
+  // d.source is still an integer ID (not passed to forceLink)
   const n = rawNodes[d.source];
   const r = nodeR(n.pi);
-  const lx = n.x, ly = n.y - r;
   const lw = r * 1.6;
-  return "M"+(lx-lw/2)+","+(ly)+" C"+(lx-lw)+","+(ly-lw*1.2)+" "+(lx+lw)+","+(ly-lw*1.2)+" "+(lx+lw/2)+","+ly;
+  return "M"+(n.x-lw/2)+","+(n.y-r)
+    +" C"+(n.x-lw)+","+(n.y-r-lw*1.2)
+    +" "+(n.x+lw)+","+(n.y-r-lw*1.2)
+    +" "+(n.x+lw/2)+","+(n.y-r);
 }
 
 function ticked() {
