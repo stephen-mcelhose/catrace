@@ -2,7 +2,7 @@
 title: catrace API
 tags: [api, go, library, kernel, agent, trace, stationary]
 sources: [README.md]
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # catrace API
@@ -157,6 +157,7 @@ m, err := J.MeanFirstPassage(worstState, bestState)
 | `self_healing_nodes` | WorldKernel (joint), MeanFirstPassage, EntropyRate, Trace | Self-Healing, Autonomous Loop |
 
 See [[Agentic Patterns Catalogue]] for the full pattern coverage map.
+See [[Scenario Registry]] for README scenario numbering and implementation status.
 
 ## Sources
 

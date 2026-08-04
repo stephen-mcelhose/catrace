@@ -2,14 +2,14 @@
 title: Agentic Patterns Catalogue
 tags: [patterns, agentic, structural, topology, dev-workflow, catalogue]
 sources: [docs/patterns/agentic-patterns-reference.md]
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # Agentic Patterns Catalogue
 
 catrace provides Markov chain models for 14 structural agentic patterns and 4 development-workflow sub-patterns. Each pattern has a story file (state spaces, semantic interpretation, played-out micro-paths) and, for implemented patterns, a runnable example with WALKTHROUGH.
 
-See [[Structural Patterns]] and [[Dev-Workflow Patterns]] for depth. This page is the overview index.
+See [[Structural Patterns]] and [[Dev-Workflow Patterns]] for depth. This page is the overview index. For README scenario numbers (1–6) and plan-vs-README integrity, see [[Scenario Registry]].
 
 ## Structural patterns
 
@@ -18,13 +18,13 @@ These describe *how agents are connected and coordinate*, independent of domain.
 | # | Pattern | Topology | catrace example | Story | Status |
 |---|---------|----------|-----------------|-------|--------|
 | 1 | Augmented LLM | Single node | `simple_agent` | [[Example: Simple Agent]] | ✅ Implemented |
-| 2 | Prompt Chaining | Linear pipeline | — | [[Structural Patterns]] | 🔲 Planned |
+| 2 | Prompt Chaining | Linear pipeline | draft `prompt_chaining` (no walkthrough) | [[Structural Patterns]] | 🔲 Planned |
 | 3 | Routing | Hub-and-spoke | — | [[Structural Patterns]] | 🔲 Planned |
 | 4 | Parallelisation / Fan-out | Fork-join | — | [[Structural Patterns]] | 🔲 Planned |
 | 5 | Orchestrator-Workers | Centralised hub | — | [[Structural Patterns]] | 🔲 Planned |
 | 6 | Evaluator-Optimizer | Iterative loop | `validator_repair` (partial) | [[Example: Validator Repair]] | ✅ Implemented |
 | 7 | Autonomous Agent Loop | Single cyclic agent | `simple_agent`, `self_healing_nodes` | [[Example: Simple Agent]], [[Example: Self-Healing Nodes]] | ✅ Implemented |
-| 8 | Supervisor / Hierarchical | Tree | — | [[Structural Patterns]] | 🔲 Planned |
+| 8 | Supervisor / Hierarchical | Tree | — (README scenario 5) | [[Structural Patterns]] | 🔲 Planned |
 | 9 | Swarm / Peer-to-peer | Mesh | — | [[Structural Patterns]] | 🔲 Planned |
 | 10 | Blackboard | Star (shared memory) | — | [[Structural Patterns]] | 🔲 Planned |
 | 11 | Debate / Adversarial | Pair/panel + judge | — | [[Structural Patterns]] | 🔲 Planned |

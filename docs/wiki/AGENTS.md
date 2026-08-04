@@ -23,6 +23,7 @@ Raw sources are the existing project documents, read in place. The LLM never edi
 | `docs/patterns/agentic-patterns-reference.md`| Full pattern reference table                 |
 | `docs/patterns/story-*.md`                   | Individual pattern stories (17 files)        |
 | `examples/*/WALKTHROUGH.md`                  | Example walkthroughs (4 files)               |
+| `plans/*.md`                                 | Implementation plans (lint cross-check only) |
 | `docs/wiki/raw/`                             | Future external sources (papers, URLs)       |
 
 ## Wiki page domains
@@ -57,8 +58,17 @@ Specifically:
 - New walkthrough added → ingest it, link to its pattern page and API pages it demonstrates
 - `GLOSSARY.md` or `docs/math_summary.md` updated → re-ingest, propagate to math and API pages
 - After any batch of raw source changes → run lint to catch stale claims
+- `README.md` scenario list changes → update [[Scenario Registry]] and re-lint
+- New or edited `plans/*.md` → lint against [[Scenario Registry]] (plans must not invent README scenario numbers)
 
 The lint operation is the safety net. Run it whenever in doubt.
+
+**Exhaustive lint must also cross-check** (beyond orphans/wikilinks):
+
+1. README `### N.` scenarios ↔ [[Scenario Registry]] table
+2. “Implemented” status requires `main.go` **and** `WALKTHROUGH.md`
+3. `plans/*.md` scenario-number claims vs README (README wins)
+4. [[Agentic Patterns Catalogue]] / [[Structural Patterns]] status vs registry
 
 ## Operations
 

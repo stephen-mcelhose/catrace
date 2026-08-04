@@ -2,7 +2,7 @@
 title: Structural Patterns
 tags: [patterns, structural, topology, agentic, markov, modeling]
 sources: [docs/patterns/agentic-patterns-reference.md, docs/patterns/story-single-llm-agent.md, docs/patterns/story-hidden-support-system.md, docs/patterns/story-validator-repair.md, docs/patterns/story-self-healing-nodes.md, docs/patterns/story-prompt-chaining.md, docs/patterns/story-routing.md, docs/patterns/story-parallelisation.md, docs/patterns/story-orchestrator-workers.md, docs/patterns/story-supervisor.md, docs/patterns/story-swarm.md, docs/patterns/story-blackboard.md, docs/patterns/story-debate.md, docs/patterns/story-plan-and-execute.md]
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # Structural Patterns
@@ -29,7 +29,9 @@ Structural patterns describe how agents are connected and how they coordinate, i
 
 **Key insight:** The gate between stages is a soft probabilistic filter. A stage that perceives `input_noisy` but processes anyway has a high probability of producing output that the next stage will also perceive as noisy — cascading degradation is the primary failure mode.
 
-**Not yet implemented** (issue #5).
+**Not yet implemented** (issue #5). README scenario 6 points here; a draft
+`examples/prompt_chaining/main.go` exists without a walkthrough — see
+[[Scenario Registry]].
 
 ---
 
@@ -97,7 +99,9 @@ Structural patterns describe how agents are connected and how they coordinate, i
 
 **Key insight:** The primary question — how often is the supervisor's intervention actually necessary? — is answered by comparing the team's self-unblocking rate (in the developer D kernels) against the first-passage time from healthy to critical under `hold_course`.
 
-**Not yet implemented** (issue #9).
+**Not yet implemented** (issue #9). This is README scenario 5 (majority-valid
+coordination story) — see [[Scenario Registry]]. Do not confuse with the
+planned `network_of_healers` example, which is not a README scenario.
 
 ---
 
@@ -142,6 +146,18 @@ Structural patterns describe how agents are connected and how they coordinate, i
 **Key insight:** A rigid plan that cannot absorb partial failure costs more to revise than a looser one — the MFPT from `planning` to `complete` under a strict plan policy vs. a flexible one measures this directly.
 
 **Not yet implemented** (issue #13).
+
+---
+
+## 13. Human-in-the-Loop
+
+**Topology:** Any of the above plus a human gate at defined checkpoints.
+
+**catrace model:** Extend the agent (or joint) action space with a `request_human` / `await_approval` action that transitions into a holding world state (`pending_human`). Human response is modeled as an exogenous perception or a separate one-state “human” agent whose action kernel maps to `approve` / `reject` / `redirect`. Mean first passage time into and out of `pending_human` measures human-in-the-loop latency cost; stationary mass on `pending_human` is the long-run fraction of time blocked on people.
+
+**Key insight:** HITL is not a separate topology — it is a gate layered on another pattern. The modelling question is whether the human gate reduces failure mass enough to justify the MFPT penalty of waiting.
+
+**Not yet implemented** (no dedicated story file yet; listed in `docs/patterns/agentic-patterns-reference.md`).
 
 ---
 

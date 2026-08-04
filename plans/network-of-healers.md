@@ -13,7 +13,11 @@ nodes is topology-specific, encoded entirely in $A_\text{joint}$: the same node 
 evolver kernels are reused across all four topologies, and only the inter-node action
 effects change.
 
-This is scenario 5 in `README.md`.
+This is a **planned** example (not yet a README scenario). As of 2026-08-04,
+`README.md` scenario 5 is the three-agent majority-valid coordination network
+(`docs/patterns/story-supervisor.md`, not implemented). Do not claim a README
+scenario number for this plan until the modelling premise is settled and the
+README scenario list is deliberately updated. See wiki `[[Scenario Registry]]`.
 
 ---
 
@@ -366,7 +370,7 @@ interpretation per result.
 
 ---
 
-## README entry (scenario 5)
+## README entry (draft — assign number only when adding to README)
 
 **Story paragraph:** Plain English, no backticks. Four ways to wire two self-healing
 nodes together: unconnected, in series, sharing load symmetrically, or helping each

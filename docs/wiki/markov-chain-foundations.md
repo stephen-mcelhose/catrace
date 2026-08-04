@@ -2,7 +2,7 @@
 title: Markov Chain Foundations
 tags: [markov, mathematics, stochastic, stationary, entropy-rate, mfpt, communicating-classes]
 sources: [docs/math_summary.md, docs/source_writeup.md]
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # Markov Chain Foundations

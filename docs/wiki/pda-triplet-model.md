@@ -2,7 +2,7 @@
 title: PDA Triplet Model
 tags: [pda, agent, kernel, composition, cyclic-kernels, modeling, hpc]
 sources: [docs/math_summary.md, docs/source_writeup.md]
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # PDA Triplet Model

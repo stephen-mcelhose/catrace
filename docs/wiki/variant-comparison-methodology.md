@@ -2,7 +2,7 @@
 title: Variant Comparison Methodology
 tags: [methodology, variant-comparison, hypothesis, experiment, measurement, architecture]
 sources: [examples/self_healing_nodes/WALKTHROUGH.md, docs/patterns/story-self-healing-nodes.md]
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # Variant Comparison Methodology

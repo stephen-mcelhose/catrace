@@ -2,7 +2,7 @@
 title: "Example: Self-Healing Nodes"
 tags: [example, self-healing, variant-comparison, mfpt, entropy-rate, joint-kernel, coupling]
 sources: [examples/self_healing_nodes/WALKTHROUGH.md, docs/patterns/story-self-healing-nodes.md]
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # Example: Self-Healing Nodes
@@ -93,6 +93,8 @@ This example shows catrace as a **measuring instrument for architectural claims*
 4. The numbers say which claim the model supports
 
 The formalized hypothesis record for this comparison lives in `experiments/nodes-throttle-vs-evolver/hypothesis.md`. The general methodology — including the hypothesis template and guidance on well-formed claims — is documented in [[Variant Comparison Methodology]].
+
+A planned sequel (`plans/network-of-healers.md` → `examples/network_of_healers`) would vary inter-node coupling rather than throttle-vs-evolver strength. That plan is **not** a README scenario number; see [[Scenario Registry]].
 
 ## Connection to math and API
 

@@ -95,3 +95,29 @@ Issues found and fixed:
 - **variant-comparison-methodology.md**: only referenced nodes-throttle-vs-evolver; added "Pending experiments" table for spectral-gap-mixing-time (#25), stationary-sensitivity (#26), n-agent-scalability
 
 No orphans. No contradictions. No index gaps.
+
+---
+
+## [2026-08-04] lint | exhaustive | 16 pages checked, 8 issues found, 8 fixed
+
+Cross-checks added: README scenarios ↔ plans ↔ examples (beyond orphans/wikilinks).
+
+Issues found and fixed:
+- **plans/network-of-healers.md**: falsely claimed "This is scenario 5 in README.md"; README scenario 5 is majority-valid / `story-supervisor.md`. Corrected plan to "planned, no README number"; renamed README-entry section to draft.
+- **Missing [[Scenario Registry]]**: no wiki anchor for README numbering; created `scenario-registry.md` (README 1–6 map, planned non-README examples, draft-code rules).
+- **structural-patterns.md**: skipped pattern 13 (Human-in-the-Loop) while catalogue listed it; added §13 stub from agentic-patterns-reference.
+- **structural-patterns.md**: Prompt Chaining / Supervisor lacked README scenario cross-links; noted scenario 6 draft `prompt_chaining` and scenario 5 ≠ network_of_healers.
+- **agentic-patterns-catalogue.md**: Prompt Chaining showed bare "—"; noted draft without walkthrough; Supervisor annotated as README scenario 5.
+- **index.md**: stale `updated: 2026-08-02` and missing Scenario Registry row; refreshed (16 pages).
+- **AGENTS.md**: lint discipline did not cross-check README scenarios or `plans/*`; added rules + plans as lint-only raw source.
+- **Stale frontmatter dates** on pages edited 2026-08-04 but still marked 2026-08-02 (markov-chain-foundations, pda-triplet-model, variant-comparison-methodology).
+
+Already resolved (no change needed):
+- `experiments/README.md` already reports Supported (4/4 metrics) — prior unfixed 3/3 contradiction cleared.
+
+Unfixable / deferred (human judgment):
+- Whether `network_of_healers` should ever become a README scenario (modelling premise under review).
+- Whether to promote `examples/prompt_chaining/main.go` to a full example (needs WALKTHROUGH + README status flip).
+
+Propagated: [[Scenario Registry]] linked from index, catalogue, catrace-api, structural-patterns, example-self-healing-nodes.
+No orphans. All wikilinks resolve.

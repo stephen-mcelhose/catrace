@@ -1,6 +1,6 @@
 ---
 title: Wiki Index
-updated: 2026-08-02
+updated: 2026-08-04
 ---
 
 # catrace Wiki — Index
@@ -22,3 +22,4 @@ updated: 2026-08-02
 | [[Example: Self-Healing Nodes]] | Variant comparison — throttle vs evolver, MFPT, entropy rate, architectural measurement | example, self-healing, variant-comparison, mfpt |
 | [[Variant Comparison Methodology]] | Encode design debates as parameter regimes; let stationary/MFPT/entropy vote; hypothesis template | methodology, variant-comparison, hypothesis, experiment |
 | [[Experiment Registry]] | Status table for all filed experiments; completed results for nodes-throttle-vs-evolver (supported) and wiki-knowledge-graph (not supported) | experiments, registry, results, variant-comparison |
+| [[Scenario Registry]] | README scenario numbers → stories, examples, status; planned-vs-README integrity | scenarios, readme, examples, status, registry |
