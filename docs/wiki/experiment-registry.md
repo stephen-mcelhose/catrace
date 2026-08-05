@@ -45,6 +45,8 @@ Run and interpretation live on [PR #22](https://github.com/stephen-mcelhose/catr
 
 Provisional finding (from the PR): `IsTraceOf = true`, but predicted rank shifts for `Structural Patterns` / `Dev-Workflow Patterns` did not meet thresholds. Promote to Completed results only after merge.
 
+**Lint note (2026-08-05):** The wiki on `main` now includes [[Example: Prompt Chaining]] (and other pages beyond the experiment’s original “14 existing” Graph A). The Active run on PR #22 used a stale baseline; re-baseline Graph A/B before treating Results as final.
+
 ## Completed results
 
 ### nodes-throttle-vs-evolver — Supported (4/4 metrics)

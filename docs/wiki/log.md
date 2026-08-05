@@ -173,3 +173,22 @@ Skill v1.2.0: mandatory § Status check & maintain on every lint/sync (derive st
 Pages written: example-prompt-chaining.md
 Propagated to: [[Structural Patterns]] §2, [[Agentic Patterns Catalogue]], [[Scenario Registry]] (scenario 6 → Implemented), [[Wiki Index]]
 Raw sources: docs/patterns/story-prompt-chaining.md, examples/prompt_chaining/{main.go,WALKTHROUGH.md}, README.md scenario 6
+
+---
+
+## [2026-08-05] lint | 17 content pages checked, 3 issues found, 2 fixed
+
+Checked: orphans/wikilinks, index coverage, Scenario Registry ↔ README, Implemented = main.go+WALKTHROUGH, catalogue ↔ registry, experiments status maintain.
+
+Clean:
+- No content orphans; all index rows present; no real broken wikilinks (false positives: `[[Page Slug]]` in AGENTS, `[[0, 1]]` code output)
+- README scenarios 1–6 match [[Scenario Registry]]; scenario 6 Implemented with `examples/prompt_chaining/{main.go,WALKTHROUGH.md}`
+- Catalogue Prompt Chaining ✅ matches registry
+- Experiments: nodes Complete; wiki-knowledge-graph Active (PR #22 open, Results empty on main); others Pending with issues
+
+Fixed:
+- `AGENTS.md` walkthrough count 4 → 5
+- [[catrace API]] Implemented examples table: added `prompt_chaining`
+
+Unfixable / needs human:
+- Active `wiki-knowledge-graph` still models “14 existing + 14 planned”; [[Example: Prompt Chaining]] landing on main invalidates Graph A baseline — noted on [[Experiment Registry]]; re-baseline before final Verdict
