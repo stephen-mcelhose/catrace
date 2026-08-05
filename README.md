@@ -138,11 +138,11 @@ Three agents coordinate on a shared task. As long as at least two are functionin
 
 [Full story, state meanings, and interpretation →](docs/patterns/story-supervisor.md)
 
-### 6. Four-agent pipeline with escalation *(not yet implemented)*
+### 6. Prompt-chaining document pipeline
 
 Story:
 
-A four-stage workflow handles incoming work. Local fixes are fast but unreliable, rerouting helps around isolated failures, and escalation is expensive but can stabilize the whole system. The network may move between fully healthy operation, partial degradation, and systemic breakdown.
+A diligence desk runs a fixed prompt chain: extract claims, summarise to a brief, format a client report. Each step is its own LLM call on the previous artifact; programmatic gates between steps pass, retry the stage, or escalate to human review (which may re-queue). The interesting measurements are how often work ships versus lands in the human queue, and how many steps shipping takes under retry pressure.
 
 [Full story, state meanings, and interpretation →](docs/patterns/story-prompt-chaining.md)
 
@@ -160,6 +160,7 @@ Current files:
 - `examples/trace_analysis/main.go`
 - `examples/validator_repair/main.go`
 - `examples/self_healing_nodes/main.go`
+- `examples/prompt_chaining/main.go`
 - `catrace_test.go`
 
 ## Build

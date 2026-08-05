@@ -1,8 +1,8 @@
 ---
 title: Scenario Registry
 tags: [scenarios, readme, examples, status, registry]
-sources: [README.md, plans/network-of-healers.md, examples/prompt_chaining/main.go]
-updated: 2026-08-04
+sources: [README.md, plans/network-of-healers.md, examples/prompt_chaining/main.go, examples/prompt_chaining/WALKTHROUGH.md]
+updated: 2026-08-05
 ---
 
 # Scenario Registry
@@ -21,7 +21,7 @@ ad-hoc claims. Lint must re-check this page whenever `README.md`,
 | 3 | Two-agent validator / repair pair | `docs/patterns/story-validator-repair.md` | `examples/validator_repair` | [[Example: Validator Repair]] | Implemented |
 | 4 | Self-adjusting / self-healing network nodes | `docs/patterns/story-self-healing-nodes.md` | `examples/self_healing_nodes` | [[Example: Self-Healing Nodes]] | Implemented |
 | 5 | Three-agent majority-valid coordination network | `docs/patterns/story-supervisor.md` | — | [[Structural Patterns]] (§8 Supervisor) | Not yet implemented |
-| 6 | Four-agent pipeline with escalation | `docs/patterns/story-prompt-chaining.md` | draft only (see below) | [[Structural Patterns]] (§2 Prompt Chaining) | Not yet implemented |
+| 6 | Prompt-chaining document pipeline | `docs/patterns/story-prompt-chaining.md` | `examples/prompt_chaining` | [[Example: Prompt Chaining]] | Implemented |
 
 ## Planned examples not on the README list
 
@@ -33,7 +33,7 @@ ad-hoc claims. Lint must re-check this page whenever `README.md`,
 
 | Path | Related README # | Notes |
 |------|------------------|-------|
-| `examples/prompt_chaining/main.go` | 6 | Partial draft exists; no `WALKTHROUGH.md`, not listed under README “Current files”. Treat as **not implemented** until walkthrough + README status flip. |
+| — | — | None. |
 
 ## Lint rules for this registry
 
@@ -47,3 +47,4 @@ ad-hoc claims. Lint must re-check this page whenever `README.md`,
 - `README.md`
 - `plans/network-of-healers.md`
 - `examples/prompt_chaining/main.go`
+- `examples/prompt_chaining/WALKTHROUGH.md`

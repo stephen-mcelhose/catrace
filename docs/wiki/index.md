@@ -20,6 +20,7 @@ updated: 2026-08-05
 | [[Example: Hidden Support System]] | Trace chain demo — focal agent with hidden support system, block-matrix trace | example, trace, hidden-states |
 | [[Example: Validator Repair]] | Two-agent joint kernel — coupled perception/action, product state space | example, multi-agent, joint-kernel, coupling |
 | [[Example: Self-Healing Nodes]] | Variant comparison — throttle vs evolver, MFPT, entropy rate, architectural measurement | example, self-healing, variant-comparison, mfpt |
+| [[Example: Prompt Chaining]] | Fixed LLM pipeline + programmatic gates; assembled W; Trace; MFPT latency | example, prompt-chaining, pipeline, gate, mfpt |
 | [[Variant Comparison Methodology]] | Encode design debates as parameter regimes; let stationary/MFPT/entropy vote; hypothesis template | methodology, variant-comparison, hypothesis, experiment |
 | [[Experiment Registry]] | Status table (Pending / Active / Complete); completed nodes-throttle-vs-evolver; active wiki-knowledge-graph (PR #22) | experiments, registry, results, variant-comparison |
 | [[Scenario Registry]] | README scenario numbers → stories, examples, status; planned-vs-README integrity | scenarios, readme, examples, status, registry |
