@@ -14,21 +14,24 @@ The node's own throttle action is the primary driver of recovery from degraded s
 
 | Variant | Label | Description |
 |---------|-------|-------------|
-| A | Strong throttle | Node's throttle action has high self-recovery probability (0.65). Evolver's mutation search provides only a marginal boost (+0.05) when it cooperates with throttle. |
-| B | Weak throttle, strong evolver | Node's throttle action has lower self-recovery probability (0.40). Evolver's mutation search provides a substantial boost (+0.25) when it cooperates with throttle. |
+| A | Strong throttle | Node's throttle action has high self-recovery probability (0.65). Evolver mutation boost is negligible (+0.02 on the node's `healthy` entry before renormalization). |
+| B | Weak throttle, strong evolver | Node's throttle action has lower self-recovery probability (0.45). Evolver mutation boost is large (+0.25 on throttle's `healthy` entry before renormalization). |
 
-*State spaces, agent structure, and all coupling points are identical in both variants. Only the A_joint entries for throttle-related transitions differ.*
+*State spaces, agent structure, and coupling points are identical across variants. Diffs are the node's `A` rows and the per-action `mutationBoost` vector in `examples/self_healing_nodes/main.go`.*
 
 ## Variable kernel entries
 
+Values below are the node's next-world `healthy` weight used when building `A_joint` (promote: raw `nodeA` row; mutate: `healthy + boost`, then row-renormalize). Source of truth: `examples/self_healing_nodes/main.go`.
+
 | Kernel | Transition | Variant A | Variant B | What it encodes |
 |--------|-----------|-----------|-----------|-----------------|
-| A_joint | (throttle, promote) → healthy | 0.65 | 0.40 | Node's self-recovery strength when evolver is not mutating |
-| A_joint | (throttle, mutate) → healthy | 0.70 | 0.65 | Node self-recovery + weak evolver boost (A) vs. strong evolver boost (B) |
-| A_joint | (push, mutate) → healthy | 0.20 | 0.35 | Evolver's contribution when node is not throttling |
-| A_joint | (idle, mutate) → healthy | 0.15 | 0.30 | Evolver's floor contribution |
+| node `A` | `throttle` → `healthy` (promote / no boost) | 0.65 | 0.45 | Node self-recovery without evolver help |
+| `A_joint` | (`throttle`, `mutate`) → node `healthy` (after boost+renorm) | ≈0.657 | 0.56 | Local heal + mutation boost (tiny in A, large in B) |
+| `mutationBoost` | on `throttle` | +0.02 | +0.25 | How much mutate lifts `healthy` before renorm |
+| node `A` | `push` → `healthy` | 0.70 | 0.55 | Baseline drive risk differs by variant |
+| node `A` | `idle` → `healthy` | 0.85 | 0.60 | Idle recovery floor differs by variant |
 
-*All other A_joint entries are identical across variants. A_joint rows are renormalized after applying boost amounts to maintain row-stochasticity.*
+*Mutate rows for `push`/`idle` also apply that action's boost (+0.02 in A; +0.20/+0.20 in B) then renormalize. Evolver `A` is shared across variants.*
 
 ## Predictions
 

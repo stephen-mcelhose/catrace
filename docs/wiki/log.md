@@ -236,3 +236,7 @@ Fixed:
 Open (not fixed):
 - Catalogue lead “every pattern has a story file” overclaims HITL (no `story-human-in-the-loop.md`; Structural §13 already notes this)
 - Glossary omits dedicated Trace / Entropy rate entries that exist in `GLOSSARY.md` (coverage gap, not contradiction)
+
+## [2026-08-05] lint | fix nodes-throttle hypothesis vs self_healing_nodes runner
+
+Random-walk finding: `experiments/nodes-throttle-vs-evolver/hypothesis.md` Variable table (B throttle 0.40, A boost +0.05, pre-renorm mutate sums) disagreed with `examples/self_healing_nodes/main.go` / WALKTHROUGH (B 0.45, A +0.02, boost+renorm). Results already matched the runner — updated Variables. Also corrected [[Example: Self-Healing Nodes]] “Variant B only” action-coupling wording.
