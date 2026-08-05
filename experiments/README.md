@@ -12,6 +12,14 @@ An experiment is a *before-the-run* record of:
 
 Experiments are distinct from examples. An **example** (`examples/`) demonstrates how to use catrace on a particular pattern. An **experiment** (`experiments/`) asks and answers a specific design question using catrace as a measuring instrument.
 
+### Status
+
+| Status | Means |
+|--------|--------|
+| **Pending** | Hypothesis filed; no run / no implementation PR yet |
+| **Active** | Runner or Results on a branch/PR; not fully landed on `main` |
+| **Complete** | Results + Verdict in `hypothesis.md` on `main` |
+
 ## How to file a new experiment
 
 1. Create a subdirectory named after the claim: `experiments/<short-slug>/`
@@ -28,7 +36,7 @@ Experiments are distinct from examples. An **example** (`examples/`) demonstrate
 | Slug | Claim | Status | Verdict | Issue |
 |------|-------|--------|---------|-------|
 | [nodes-throttle-vs-evolver](nodes-throttle-vs-evolver/hypothesis.md) | Node throttle is primary recovery mechanism; evolver contributes but is not essential | Complete | Supported (4/4 metrics) | — |
-| [wiki-knowledge-graph](wiki-knowledge-graph/hypothesis.md) | Trace chain corrects importance distortion caused by missing wiki pages | Complete | Not supported (1/4 criteria) | [#21](https://github.com/stephen-mcelhose/catrace/issues/21) |
+| [wiki-knowledge-graph](wiki-knowledge-graph/hypothesis.md) | Trace chain corrects importance distortion caused by missing wiki pages | Active | provisional: not supported (1/4) — [PR #22](https://github.com/stephen-mcelhose/catrace/pull/22) | [#21](https://github.com/stephen-mcelhose/catrace/issues/21) |
 | [spectral-gap-mixing-time](spectral-gap-mixing-time/hypothesis.md) | Spectral gap rank-orders kernels correctly by empirical mixing speed | Pending | — | [#25](https://github.com/stephen-mcelhose/catrace/issues/25) |
 | [stationary-sensitivity](stationary-sensitivity/hypothesis.md) | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution | Pending | — | [#26](https://github.com/stephen-mcelhose/catrace/issues/26) |
 | [n-agent-scalability](n-agent-scalability/hypothesis.md) | Dense joint kernel approach becomes intractable at N=4+ agents; trace collapses are the solution | Pending | — | [#27](https://github.com/stephen-mcelhose/catrace/issues/27) |
@@ -38,4 +46,6 @@ Experiments are distinct from examples. An **example** (`examples/`) demonstrate
 
 ## Methodology
 
-See [docs/wiki/variant-comparison-methodology.md](../docs/wiki/variant-comparison-methodology.md) for the full methodology, hypothesis template guidance, and generalization to other patterns. Maintenance: `.agents/skills/experiments/SKILL.md`.
+See [docs/wiki/variant-comparison-methodology.md](../docs/wiki/variant-comparison-methodology.md) for the full methodology, hypothesis template guidance, and generalization to other patterns.
+
+**Maintenance:** `.agents/skills/experiments/SKILL.md` — every lint/sync **must** re-derive Pending/Active/Complete from `main` hypothesis contents + open PRs/issues and fix registry drift (see skill § Status check & maintain).

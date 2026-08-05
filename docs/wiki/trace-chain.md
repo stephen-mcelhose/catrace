@@ -2,7 +2,7 @@
 title: Trace Chain
 tags: [trace, markov, reduction, hidden-states, observation, kernel]
 sources: [docs/math_summary.md]
-updated: 2026-08-02
+updated: 2026-08-05
 ---
 
 # Trace Chain
@@ -58,7 +58,7 @@ Every example demonstrates trace in a different context:
 
 In all three cases, `IsTraceOf = true` confirms the analytical trace matches what would be observed empirically in a long simulation.
 
-The `wiki-knowledge-graph` experiment (see [[Experiment Registry]]) applied the trace chain to the catrace wiki's own page-link graph, treating 14 planned pages as hidden states and 14 existing pages as the observed subset. `IsTraceOf = true` held — the stationary consistency theorem was confirmed. However, the structural claim that trace correction would substantially rerank existing pages was not supported (1/4 criteria met). The mathematical technique is exact; the predicted effect size on this particular graph was wrong.
+The `wiki-knowledge-graph` experiment (see [[Experiment Registry]]) applied the trace chain to the catrace wiki's own page-link graph, treating 14 planned pages as hidden states and 14 existing pages as the observed subset. A provisional run on [PR #22](https://github.com/stephen-mcelhose/catrace/pull/22) found `IsTraceOf = true` but did not support the structural reranking claim (1/4 criteria). Status is **Active** until that PR merges to `main`.
 
 ## Sampling and estimation
 

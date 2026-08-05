@@ -154,4 +154,14 @@ Clean:
 
 Unfixable (needs human judgment):
 - GitHub #24 `experiment: side-by-side kernel comparison visualisation` — open `experiment:` issue with **no** `experiments/<slug>/` hypothesis (orphan issue per experiments skill). File a hypothesis or close/retitle.
-- #21 still open though `wiki-knowledge-graph` is Complete — optional close with verdict comment.
+- #21 open with `wiki-knowledge-graph` — resolved next entry (status → Active, not premature Complete)
+
+---
+
+## [2026-08-05] lint | experiments status vocabulary
+
+Added **Active** status (Pending / Active / Complete) to `.agents/skills/experiments/SKILL.md`, `experiments/README.md`, [[Experiment Registry]], [[Variant Comparison Methodology]].
+
+Fixed premature Complete: `wiki-knowledge-graph` → **Active** (provisional not supported on PR #22; `main` hypothesis still empty). Moved narrative from Completed → Active sections; updated [[Trace Chain]] note.
+
+Skill v1.2.0: mandatory § Status check & maintain on every lint/sync (derive status from main Results + open PRs; fix registries; report per-slug table).

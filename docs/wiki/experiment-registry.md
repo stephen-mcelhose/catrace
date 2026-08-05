@@ -11,15 +11,25 @@ The `experiments/` directory contains formal hypothesis records for architectura
 
 See [[Variant Comparison Methodology]] for the full filing process and hypothesis template.
 
-## Registry
+## Status vocabulary
 
-Every **Pending** experiment must have an open GitHub issue (`experiment: …`).
-Maintain via `.agents/skills/experiments/SKILL.md`.
+| Status | Means |
+|--------|--------|
+| **Pending** | Hypothesis filed; no run / no implementation PR yet |
+| **Active** | Runner or Results on a branch/PR; not fully on `main` |
+| **Complete** | Results + Verdict in `hypothesis.md` on `main` |
+
+Every **Pending** or **Active** experiment must have an open GitHub issue (`experiment: …`).
+Maintain via `.agents/skills/experiments/SKILL.md`: each lint/sync **checks and
+updates** Status from evidence on `main` + open PRs (Complete only when Results
+are on `main`).
+
+## Registry
 
 | Slug | Claim | Status | Verdict | Issue |
 |------|-------|--------|---------|-------|
 | `nodes-throttle-vs-evolver` | Node throttle is primary recovery mechanism; evolver contributes but is not essential | Complete | Supported (4/4 metrics) | — |
-| `wiki-knowledge-graph` | Trace chain corrects importance distortion caused by missing wiki pages | Complete | Not supported (1/4 criteria) | #21 |
+| `wiki-knowledge-graph` | Trace chain corrects importance distortion caused by missing wiki pages | Active | provisional: not supported (1/4) — PR #22 | #21 |
 | `kg-grounding-agent-behavior` | Knowledge graph quality systematically shifts knowledge agent behavior — richer graph → higher π(understood), faster recovery, lower entropy | Pending | — | #32 |
 | `spectral-gap-mixing-time` | Spectral gap rank-orders kernels correctly by empirical mixing speed | Pending | — | #25 |
 | `stationary-sensitivity` | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution | Pending | — | #26 |
@@ -27,17 +37,19 @@ Maintain via `.agents/skills/experiments/SKILL.md`.
 | `heal-on-critical-path` | On a fixed \(1\to2\) load graph, strong local heal belongs on the downstream sink more than on the upstream feeder | Pending | — (needs `network_of_healers`) | #33 |
 | `collapse-masks-heterogeneity` | Strong-sink / weak-feeder makes collapsed pool_ok look healthier than joint upstream-overload mass warrants | Pending | — (needs `network_of_healers`) | #34 |
 
+## Active experiments
+
+### wiki-knowledge-graph — provisional not supported (1/4) — PR #22
+
+Run and interpretation live on [PR #22](https://github.com/stephen-mcelhose/catrace/pull/22) (`experiment/wiki-knowledge-graph`). On `main`, `hypothesis.md` still has empty Results/Verdict and there is no `main.go` — hence **Active**, not Complete. Issue #21 stays open until the PR merges.
+
+Provisional finding (from the PR): `IsTraceOf = true`, but predicted rank shifts for `Structural Patterns` / `Dev-Workflow Patterns` did not meet thresholds. Promote to Completed results only after merge.
+
 ## Completed results
 
 ### nodes-throttle-vs-evolver — Supported (4/4 metrics)
 
 The node's local throttle is the primary recovery mechanism. Variant A (strong throttle) outperformed Variant B (strong evolver) on all four metrics: π(H·G), MFPT(O·B→H·G), H(J), and π_trace(H·G). The outer evolutionary loop is a safety net, not a fast path. See [[Example: Self-Healing Nodes]] for the full analysis.
-
-### wiki-knowledge-graph — Not supported (1/4 criteria)
-
-The hypothesis was that trace-chain correction of a 28-node wiki graph (14 existing + 14 planned pages as hidden states) would substantially rerank structurally important pages (`Structural Patterns`, `Dev-Workflow Patterns`) relative to a naive 14-node PageRank. Only 1 of 4 criteria was met. The mathematical identity (`IsTraceOf = true`) held, but the predicted rank shifts did not materialise at the required magnitudes.
-
-This does not invalidate the [[Trace Chain]] technique — the stationary consistency theorem is exact and confirmed. What failed was the specific architectural claim that trace correction on this particular incomplete graph would produce large, predictable reranking. The graph's actual link structure produced smaller shifts than predicted.
 
 ## Filing a new experiment
 
@@ -47,7 +59,7 @@ This does not invalidate the [[Trace Chain]] technique — the stationary consis
 4. Run catrace analysis
 5. Fill Results and Verdict
 6. Add a row to `experiments/README.md` (with Issue `#N`)
-7. Open/sync GitHub issue — prefer `.agents/skills/experiments` **file** / **lint**
+7. Open/sync GitHub issue — prefer `.agents/skills/experiments` **file** / **lint** / **activate** / **complete**
 
 ## Sources
 

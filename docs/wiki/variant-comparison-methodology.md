@@ -2,7 +2,7 @@
 title: Variant Comparison Methodology
 tags: [methodology, variant-comparison, hypothesis, experiment, measurement, architecture]
 sources: [examples/self_healing_nodes/WALKTHROUGH.md, docs/patterns/story-self-healing-nodes.md]
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Variant Comparison Methodology
@@ -67,15 +67,17 @@ See [[Example: Self-Healing Nodes]] for the full analysis and `experiments/nodes
 
 **What the split would have looked like:** If π(H·G) favored A but MFPT favored B, the correct interpretation would be: "throttle keeps the system healthier on average, but when things go badly wrong, random mutation search recovers faster from the worst state." That is a genuine architectural trade-off — not a failure of the methodology.
 
-### wiki-knowledge-graph — Not supported (1/4 criteria)
+## Active experiments
 
-See `experiments/wiki-knowledge-graph/hypothesis.md` for the formalized record.
+Status **Active** means a runner/Results exist on a branch or PR, but filled Results+Verdict are not yet on `main`. See [[Experiment Registry]].
+
+### wiki-knowledge-graph — provisional not supported (1/4) — PR #22
 
 **Claim:** Trace chain correction of the catrace wiki graph (treating 14 planned pages as hidden states) would substantially rerank structurally important pages relative to a naive 14-node PageRank.
 
-**Result:** Only 1 of 4 structural criteria was met. The mathematical identity (`IsTraceOf = true`) held — the stationary consistency theorem is exact. But the predicted rank shifts for `Structural Patterns` and `Dev-Workflow Patterns` did not materialise at the required magnitudes.
+**Provisional result (PR #22 only):** Only 1 of 4 structural criteria met. `IsTraceOf = true`, but predicted rank shifts did not materialise at required magnitudes. On `main`, the hypothesis Results are still empty — do not treat as Complete until merge.
 
-**What this means for the methodology:** A "not supported" verdict is not a failure — it is information. The specific graph structure of this incomplete wiki produced smaller correction effects than predicted. The technique is sound; the claim about this particular graph was wrong. A revised hypothesis might lower the required rank-shift thresholds, or model the planned pages with different assumed link distributions.
+**What this means for the methodology (if the provisional result stands):** A "not supported" verdict is information, not a failure of Trace. The technique is sound; the claim about this particular graph was wrong.
 
 ## Generalizing to other patterns
 

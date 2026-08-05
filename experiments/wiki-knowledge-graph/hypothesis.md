@@ -17,6 +17,8 @@ better reflect their structural role in the complete wiki.
 
 - **Pattern:** Knowledge graph as Markov chain; trace chain for latent-node correction
 - **Related example:** `examples/trace_analysis` (same mathematical technique, different domain)
+- **Status:** Active — Results/Verdict filled on [PR #22](https://github.com/stephen-mcelhose/catrace/pull/22); not yet on `main`
+- **Issue:** [#21](https://github.com/stephen-mcelhose/catrace/issues/21)
 - **Motivation:** The mapping is described in `docs/wiki/variant-comparison-methodology.md` and
   the broader design discussion. Catrace's trace chain is the principled tool for exactly this
   situation: a subset of nodes is observable; the rest are latent but their influence is real.
