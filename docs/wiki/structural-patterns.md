@@ -1,7 +1,7 @@
 ---
 title: Structural Patterns
 tags: [patterns, structural, topology, agentic, markov, modeling]
-sources: [docs/patterns/agentic-patterns-reference.md, docs/patterns/story-single-llm-agent.md, docs/patterns/story-hidden-support-system.md, docs/patterns/story-validator-repair.md, docs/patterns/story-self-healing-nodes.md, docs/patterns/story-prompt-chaining.md, docs/patterns/story-routing.md, docs/patterns/story-parallelisation.md, docs/patterns/story-orchestrator-workers.md, docs/patterns/story-supervisor.md, docs/patterns/story-swarm.md, docs/patterns/story-blackboard.md, docs/patterns/story-debate.md, docs/patterns/story-plan-and-execute.md]
+sources: [docs/patterns/agentic-patterns-reference.md, docs/patterns/story-single-llm-agent.md, docs/patterns/story-hidden-support-system.md, docs/patterns/story-validator-repair.md, docs/patterns/story-self-healing-nodes.md, docs/patterns/story-prompt-chaining.md, docs/patterns/story-routing.md, docs/patterns/story-parallelisation.md, docs/patterns/story-orchestrator-workers.md, docs/patterns/story-supervisor.md, docs/patterns/story-swarm.md, docs/patterns/story-blackboard.md, docs/patterns/story-debate.md, docs/patterns/story-plan-and-execute.md, docs/wiki/raw/agent-patterns-catalog-blackboard.md]
 updated: 2026-08-05
 ---
 
@@ -97,6 +97,7 @@ Structural patterns describe how agents are connected and how they coordinate, i
 
 **Key insight:** The primary question — how often is the supervisor's intervention actually necessary? — is answered by comparing the team's self-unblocking rate (in the developer D kernels) against the first-passage time from healthy to critical under `hold_course`.
 
+**Related (catalog):** [[Agent Patterns Catalog — Blackboard]] lists Blackboard as *alternative-to* Supervisor — shared store vs coordinating agent that routes work.
 **Not yet implemented** (issue #9). This is README scenario 5 (majority-valid
 coordination story) — see [[Scenario Registry]]. Do not confuse with the
 planned `network_of_healers` example, which is not a README scenario.
@@ -111,17 +112,25 @@ planned `network_of_healers` example, which is not a README scenario.
 
 **Key insight:** Coverage collapse (all drones simultaneously targeting the same zone) is visible in the stationary distribution as high mass on partially_covered — the emergent failure mode that independent local decisions cannot self-correct.
 
+**Related (catalog):** [[Agent Patterns Catalog — Blackboard]] lists Blackboard as *complements* Swarm — indirect shared workspace vs direct peer interaction without a central supervisor.
+
 **Not yet implemented** (issue #10).
 
 ---
 
 ## 10. Blackboard
 
+**Aliases (external catalog):** Shared Workspace, Collaboration Whiteboard. See [[Agent Patterns Catalog — Blackboard]].
+
 **Topology:** Star — N specialist agents + shared blackboard workspace.
 
-**catrace model:** Blackboard world states track collective agreement (`undiagnosed`, `tentative_diagnosis`, `confirmed_diagnosis`, `contradicted`). Each specialist's perception is coupled to the blackboard world state: a `tentative_diagnosis` shifts experience toward `evidence_strong` if the specialist's own data aligns, or toward `evidence_weak` if it conflicts. Decisions are independent (D_joint = D_rad⊗D_path⊗D_notes). The action kernel captures how combinations of specialist posts advance the board state. Mean first passage time from `undiagnosed` to `confirmed_diagnosis` measures diagnostic latency.
+**External catalog (Agent Patterns Catalog):** Establish a shared store; agents read a slice and write under structured keys; optional change notification; conflict resolution is policy-driven (last-write-wins, version-vector, append-only). **Forbids** out-of-band agent-to-agent calls — coordination only via the board. Neighbourhood: **alternative-to** Supervisor (§8); **complements** Swarm (§9); **generalises** Stigmergic Coordination. Gives loose coupling and inspectable state; costs races and board bloat without pruning.
 
-**Not yet implemented** (issue #11).
+**catrace model:** Shared board world (`undiagnosed`, `tentative_diagnosis`, `confirmed_diagnosis`, `contradicted`). Identical specialists (roles as labels) perceive the board only: `tentative_diagnosis` raises $P(\texttt{evidence_strong})$ — opportunistic precondition. $D_\text{joint}=D^{\otimes 3}$. Action rules count posts / endorsements / flags; $J$ is assembled row-wise because next board depends on current status and joint action. MFPT `undiagnosed`→`confirmed_diagnosis` ≈ 10.4 steps (default params). Trace onto `{undiagnosed, confirmed_diagnosis, contradicted}`.
+
+**Catalog vs example:** Catalog stresses conflict policy, pruning, and optional who-runs-next control. The Implemented example parks those as non-goals and teaches board-coupled perception + count-based accretion.
+
+**Implemented:** `examples/blackboard` — [[Example: Blackboard]] (issue #11, README scenario 7).
 
 ---
 
@@ -187,3 +196,5 @@ planned `network_of_healers` example, which is not a README scenario.
 - `docs/patterns/story-blackboard.md`
 - `docs/patterns/story-debate.md`
 - `docs/patterns/story-plan-and-execute.md`
+- `docs/wiki/raw/agent-patterns-catalog-blackboard.md`
+- [[Agent Patterns Catalog — Blackboard]]

@@ -1,7 +1,7 @@
 ---
 title: Agentic Patterns Catalogue
 tags: [patterns, agentic, structural, topology, dev-workflow, catalogue]
-sources: [docs/patterns/agentic-patterns-reference.md]
+sources: [docs/patterns/agentic-patterns-reference.md, docs/wiki/raw/agent-patterns-catalog-blackboard.md]
 updated: 2026-08-05
 ---
 
@@ -9,7 +9,7 @@ updated: 2026-08-05
 
 catrace provides Markov chain models for 14 structural agentic patterns and 4 development-workflow sub-patterns. Each pattern has a story file (state spaces, semantic interpretation, played-out micro-paths) and, for implemented patterns, a runnable example with WALKTHROUGH.
 
-See [[Structural Patterns]] and [[Dev-Workflow Patterns]] for depth. This page is the overview index. For README scenario numbers (1–6) and plan-vs-README integrity, see [[Scenario Registry]].
+See [[Structural Patterns]] and [[Dev-Workflow Patterns]] for depth. This page is the overview index. For README scenario numbers (1–7) and plan-vs-README integrity, see [[Scenario Registry]].
 
 ## Structural patterns
 
@@ -26,7 +26,7 @@ These describe *how agents are connected and coordinate*, independent of domain.
 | 7 | Autonomous Agent Loop | Single cyclic agent | `simple_agent`, `self_healing_nodes` | [[Example: Simple Agent]], [[Example: Self-Healing Nodes]] | ✅ Implemented |
 | 8 | Supervisor / Hierarchical | Tree | — (README scenario 5) | [[Structural Patterns]] | 🔲 Planned |
 | 9 | Swarm / Peer-to-peer | Mesh | — | [[Structural Patterns]] | 🔲 Planned |
-| 10 | Blackboard | Star (shared memory) | — | [[Structural Patterns]] | 🔲 Planned |
+| 10 | Blackboard (Shared Workspace / Collaboration Whiteboard) | Star (shared memory) | `blackboard` | [[Example: Blackboard]]; [[Agent Patterns Catalog — Blackboard]] | ✅ Implemented |
 | 11 | Debate / Adversarial | Pair/panel + judge | — | [[Structural Patterns]] | 🔲 Planned |
 | 12 | Plan-and-Execute | Two-phase | — | [[Structural Patterns]] | 🔲 Planned |
 | 13 | Human-in-the-Loop | Any + human gate | — | — | 🔲 Planned |
@@ -52,6 +52,9 @@ The pattern catalogue draws from three primary sources:
 - **IBM** — IBM Think, *AI Agent Use Cases*
 - **LG** — VThink Technologies, *Common Agentic Patterns in LangGraph*
 
+Additional catalog ingest (Blackboard only so far):
+- **APC** — [Agent Patterns Catalog — Blackboard](https://www.agentpatternscatalog.org/patterns/blackboard/) (aliases Shared Workspace / Collaboration Whiteboard; forbids out-of-band A2A; alternative-to Supervisor; complements Swarm; generalises Stigmergic Coordination). Wiki page: [[Agent Patterns Catalog — Blackboard]]. Status remains 🔲 Planned — no example code.
+
 ## catrace modeling approach
 
 Every pattern is expressed as a [[PDA Triplet Model]] over appropriate state spaces. The catrace methodology:
@@ -67,3 +70,5 @@ When comparing two design choices that share the same topology, use the [[Varian
 ## Sources
 
 - `docs/patterns/agentic-patterns-reference.md`
+- `docs/wiki/raw/agent-patterns-catalog-blackboard.md`
+- [[Agent Patterns Catalog — Blackboard]]

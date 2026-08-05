@@ -156,6 +156,7 @@ m, err := J.MeanFirstPassage(worstState, bestState)
 | `validator_repair`   | WorldKernel (joint), Trace, Stationary     | Evaluator-Optimizer, Self-Healing |
 | `self_healing_nodes` | WorldKernel (joint), MeanFirstPassage, EntropyRate, Trace | Self-Healing, Autonomous Loop |
 | `prompt_chaining`    | NewKernel (assembled W), Trace, IsTraceOf, Stationary, MeanFirstPassage | Prompt Chaining |
+| `blackboard`         | NewKernel (assembled J), Trace, IsTraceOf, Stationary, MeanFirstPassage | Blackboard |
 
 See [[Agentic Patterns Catalogue]] for the full pattern coverage map.
 See [[Scenario Registry]] for README scenario numbering and implementation status.
