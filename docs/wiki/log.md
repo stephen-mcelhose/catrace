@@ -165,3 +165,11 @@ Added **Active** status (Pending / Active / Complete) to `.agents/skills/experim
 Fixed premature Complete: `wiki-knowledge-graph` → **Active** (provisional not supported on PR #22; `main` hypothesis still empty). Moved narrative from Completed → Active sections; updated [[Trace Chain]] note.
 
 Skill v1.2.0: mandatory § Status check & maintain on every lint/sync (derive status from main Results + open PRs; fix registries; report per-slug table).
+
+---
+
+## [2026-08-05] implement | prompt_chaining example (#5)
+
+Pages written: example-prompt-chaining.md
+Propagated to: [[Structural Patterns]] §2, [[Agentic Patterns Catalogue]], [[Scenario Registry]] (scenario 6 → Implemented), [[Wiki Index]]
+Raw sources: docs/patterns/story-prompt-chaining.md, examples/prompt_chaining/{main.go,WALKTHROUGH.md}, README.md scenario 6

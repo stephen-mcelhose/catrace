@@ -1,5 +1,12 @@
 # Agent instructions
 
+## Examples
+
+When starting, implementing, closing, or linting pattern examples (issues titled
+`example: …`), follow `.agents/skills/examples/SKILL.md`. That workflow includes
+a real-ish story critique before coding, then walkthrough/README conventions
+and Scenario Registry / wiki close-out.
+
 ## Walkthroughs
 
 When writing or updating a walkthrough for any example, follow the standards

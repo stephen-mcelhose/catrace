@@ -2,7 +2,7 @@
 title: Structural Patterns
 tags: [patterns, structural, topology, agentic, markov, modeling]
 sources: [docs/patterns/agentic-patterns-reference.md, docs/patterns/story-single-llm-agent.md, docs/patterns/story-hidden-support-system.md, docs/patterns/story-validator-repair.md, docs/patterns/story-self-healing-nodes.md, docs/patterns/story-prompt-chaining.md, docs/patterns/story-routing.md, docs/patterns/story-parallelisation.md, docs/patterns/story-orchestrator-workers.md, docs/patterns/story-supervisor.md, docs/patterns/story-swarm.md, docs/patterns/story-blackboard.md, docs/patterns/story-debate.md, docs/patterns/story-plan-and-execute.md]
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Structural Patterns
@@ -23,15 +23,13 @@ Structural patterns describe how agents are connected and how they coordinate, i
 
 ## 2. Prompt Chaining
 
-**Topology:** Linear pipeline of N sequential agents, with optional gate between each.
+**Topology:** Linear pipeline of N sequential LLM calls, with optional programmatic gate between each.
 
-**catrace model:** World states trace pipeline progress (`raw`, `extracted`, `summarised`, `formatted`, `failed`). Perception captures how reliably a stage agent reads incoming material quality (`input_clear`, `input_noisy`). Actions include `process`, `retry`, `escalate`. The world kernel W=PDA gives the full stage-to-stage transition matrix including retry loops and failure exits. Tracing onto {raw, formatted, failed} reveals end-to-end success/failure rates.
+**catrace model:** Pipeline world states track artifact progress (`raw`, `extracted`, `summarised`, `formatted`, `failed`). Each stage has its own perception and decision kernels; only the active stage fires. Gates are code (`pass` / `retry_stage` / `escalate`), not a fourth LLM. The pipeline kernel $W$ is assembled row-by-row from active stage × gate — not one shared `Agent.WorldKernel()`. Trace onto `{raw, formatted, failed}`; MFPT(`raw`→`formatted`) measures desk latency. See [[Example: Prompt Chaining]].
 
-**Key insight:** The gate between stages is a soft probabilistic filter. A stage that perceives `input_noisy` but processes anyway has a high probability of producing output that the next stage will also perceive as noisy — cascading degradation is the primary failure mode.
+**Key insight:** Prompt chaining is a workflow with distinct stage policies and programmatic gates. Retries inflate MFPT without calling the next specialist; gated intermediates look clearer than raw filings, so later links are usually easier than the first.
 
-**Not yet implemented** (issue #5). README scenario 6 points here; a draft
-`examples/prompt_chaining/main.go` exists without a walkthrough — see
-[[Scenario Registry]].
+**Implemented:** `examples/prompt_chaining` (README scenario 6, issue #5).
 
 ---
 
