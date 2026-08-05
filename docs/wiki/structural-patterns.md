@@ -49,7 +49,7 @@ Structural patterns describe how agents are connected and how they coordinate, i
 
 **Topology:** Fork-join — N parallel workers + aggregator.
 
-**catrace model:** Three independent content-moderation checkers (spam, hate, misinformation) each with their own P, D, A triplet operating on the joint product state space. Decision kernel is D_joint = D₁⊗D₂⊗D₃ (independent votes). The joint action kernel maps the 8 possible flag/pass combinations to a majority-vote moderation outcome (`removed`, `approved`). Entropy rate measures coordination efficiency: a well-tuned swarm has low entropy.
+**catrace model:** Three independent content-moderation checkers (spam, hate, misinformation) each with their own P, D, A triplet operating on the joint product state space. Decision kernel is D_joint = D₁⊗D₂⊗D₃ (independent votes). The joint action kernel maps the 8 possible flag/pass combinations to a majority-vote moderation outcome (`removed`, `approved`). Entropy rate measures how unpredictable the moderation outcome is; low entropy means the system reliably agrees on clear cases.
 
 **Key insight:** Two checkers that fail on the same content type are much less useful than two that fail independently. The joint kernel captures error correlation that the individual detection rates cannot express.
 

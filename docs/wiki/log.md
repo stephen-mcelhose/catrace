@@ -224,3 +224,15 @@ Fixed:
 
 Unfixable / needs human:
 - Active `wiki-knowledge-graph` Graph A/B baseline still pre–Prompt Chaining / Blackboard / APC page growth — re-baseline before final Verdict ([[Experiment Registry]] lint note)
+
+## [2026-08-05] query | random-walk deep verify (4 pages)
+
+Visited: [[Example: Simple Agent]], [[Agentic Patterns Catalogue]], [[catrace Glossary]], [[Structural Patterns]].
+
+Fixed:
+- Example Simple Agent: D/A prose mismatched `examples/simple_agent/main.go` (D escalate was 0.1/0.1 not 0.2/0.0; A escalate was “70% routine” not 0.2/0.8)
+- Structural §4 Parallelisation: entropy sentence was swarm copy-paste; aligned to `story-parallelisation.md`
+
+Open (not fixed):
+- Catalogue lead “every pattern has a story file” overclaims HITL (no `story-human-in-the-loop.md`; Structural §13 already notes this)
+- Glossary omits dedicated Trace / Entropy rate entries that exist in `GLOSSARY.md` (coverage gap, not contradiction)
