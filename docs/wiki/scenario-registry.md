@@ -1,7 +1,7 @@
 ---
 title: Scenario Registry
 tags: [scenarios, readme, examples, status, registry]
-sources: [README.md, plans/network-of-healers.md, examples/prompt_chaining/main.go, examples/prompt_chaining/WALKTHROUGH.md]
+sources: [README.md, plans/network-of-healers.md, examples/prompt_chaining/main.go, examples/prompt_chaining/WALKTHROUGH.md, examples/blackboard/main.go, examples/blackboard/WALKTHROUGH.md]
 updated: 2026-08-05
 ---
 
@@ -22,6 +22,7 @@ ad-hoc claims. Lint must re-check this page whenever `README.md`,
 | 4 | Self-adjusting / self-healing network nodes | `docs/patterns/story-self-healing-nodes.md` | `examples/self_healing_nodes` | [[Example: Self-Healing Nodes]] | Implemented |
 | 5 | Three-agent majority-valid coordination network | `docs/patterns/story-supervisor.md` | — | [[Structural Patterns]] (§8 Supervisor) | Not yet implemented |
 | 6 | Prompt-chaining document pipeline | `docs/patterns/story-prompt-chaining.md` | `examples/prompt_chaining` | [[Example: Prompt Chaining]] | Implemented |
+| 7 | Blackboard / shared-workspace collaboration | `docs/patterns/story-blackboard.md` | `examples/blackboard` | [[Example: Blackboard]] | Implemented |
 
 ## Planned examples not on the README list
 

@@ -146,6 +146,14 @@ A diligence desk runs a fixed prompt chain: extract claims, summarise to a brief
 
 [Full story, state meanings, and interpretation →](docs/patterns/story-prompt-chaining.md)
 
+### 7. Blackboard / shared-workspace collaboration
+
+Story:
+
+Three medical specialists collaborate on a case through a shared diagnostic board — they never message each other. An empty board rarely triggers contribution; a tentative hypothesis on the board makes specialists more likely to endorse, refine, or flag a contradiction. The interesting measurements are how long confirmation takes and how often opportunistic flags divert the case into contradiction before it reopens.
+
+[Full story, state meanings, and interpretation →](docs/patterns/story-blackboard.md)
+
 ## Tests and examples
 
 The intended style for this project is:
@@ -161,6 +169,7 @@ Current files:
 - `examples/validator_repair/main.go`
 - `examples/self_healing_nodes/main.go`
 - `examples/prompt_chaining/main.go`
+- `examples/blackboard/main.go`
 - `catrace_test.go`
 
 ## Build

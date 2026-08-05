@@ -192,3 +192,16 @@ Fixed:
 
 Unfixable / needs human:
 - Active `wiki-knowledge-graph` still models “14 existing + 14 planned”; [[Example: Prompt Chaining]] landing on main invalidates Graph A baseline — noted on [[Experiment Registry]]; re-baseline before final Verdict
+
+## [2026-08-05] ingest | Agent Patterns Catalog — Blackboard
+
+- Raw: `docs/wiki/raw/agent-patterns-catalog-blackboard.md` (https://www.agentpatternscatalog.org/patterns/blackboard/)
+- Wiki page: [[Agent Patterns Catalog — Blackboard]] (`agent-patterns-catalog-blackboard.md`)
+- Propagated: [[Structural Patterns]] §8/§9/§10, [[Agentic Patterns Catalogue]] row 10 + APC sources note, [[Joint Kernels and Coupling]] coupled-perception note, [[Wiki Index]], `AGENTS.md` raw table
+- Status unchanged: Blackboard remains 🔲 Planned (issue #11); no `examples/blackboard/`
+
+## [2026-08-05] ingest | example blackboard (#11)
+
+- Story revised (catalog-aligned opportunistic accretion); issue #11 AC updated
+- Code: `examples/blackboard/{main.go,WALKTHROUGH.md}` — MFPT undiagnosed→confirmed ≈ 10.41; Trace IsTraceOf true
+- README scenario 7; pattern reference `blackboard`; [[Scenario Registry]] Implemented; [[Example: Blackboard]]; [[Structural Patterns]] §10; catalogue row 10 ✅

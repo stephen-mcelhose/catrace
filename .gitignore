@@ -6,3 +6,5 @@ docs/markovmixing.txt
 /trace_analysis
 /validator_repair
 /self_healing_nodes
+/prompt_chaining
+/blackboard

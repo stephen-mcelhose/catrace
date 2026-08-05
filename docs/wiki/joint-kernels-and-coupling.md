@@ -1,8 +1,8 @@
 ---
 title: Joint Kernels and Coupling
 tags: [joint-kernel, product-space, kronecker, coupling, multi-agent, perception, action]
-sources: [GLOSSARY.md]
-updated: 2026-08-02
+sources: [GLOSSARY.md, docs/wiki/raw/agent-patterns-catalog-blackboard.md]
+updated: 2026-08-05
 ---
 
 # Joint Kernels and Coupling
@@ -51,6 +51,8 @@ When the Worker is degraded (w₁ = invalid), P₂_coupled raises the Validator'
 
 In `self_healing_nodes`, the evolver's perception is coupled to node health: a sick node depresses the pool score the evolver observes, making a good config look bad even when it isn't (the `D·G → D·B` leakage).
 
+The Planned Blackboard pattern ([[Structural Patterns]] §10; [[Agent Patterns Catalog — Blackboard]]) is the same shape: specialists couple perception to a shared board world state while keeping D_joint a Kronecker product — board-mediated coordination without within-cycle peer messaging.
+
 ## Coupled action effect
 
 Coupling enters A_joint when one agent's action changes another agent's world state. In `validator_repair`, the Validator's repair action restores the Worker's world state — raising Worker's probability of becoming valid by ~0.20 above what it would achieve independently:
@@ -90,3 +92,4 @@ See [[Example: Validator Repair]] and [[Example: Self-Healing Nodes]] for worked
 ## Sources
 
 - `GLOSSARY.md`
+- `docs/wiki/raw/agent-patterns-catalog-blackboard.md` (Blackboard as planned coupled-perception shape; see [[Agent Patterns Catalog — Blackboard]])
