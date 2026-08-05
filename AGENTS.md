@@ -7,6 +7,10 @@ When starting, implementing, closing, or linting pattern examples (issues titled
 a real-ish story critique before coding, then walkthrough/README conventions
 and Scenario Registry / wiki close-out.
 
+Wiki ingest + lint for an example belongs on the **example branch before push/PR**,
+not as a follow-up on `main` after merge. Standalone wiki lint / small docs fixes
+may land on `main` when asked.
+
 ## Walkthroughs
 
 When writing or updating a walkthrough for any example, follow the standards

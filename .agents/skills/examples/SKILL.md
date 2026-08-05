@@ -12,7 +12,7 @@ description: >
   the experiments skill for hypothesis registry work, not this one.
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Examples delivery
@@ -148,7 +148,20 @@ merge-critical library / experiment runner code (see review skill).
 
 ## Operation: close
 
-Run when the example is ready to merge or just merged.
+Run when the example is ready to ship — **on the example branch, before
+push / PR**, not as a follow-up commit on `main` after merge.
+
+Wiki lint / small docs-only fixes may land on `main` when the user asks; for
+an example delivery they belong in the same branch as the code.
+
+### Order
+
+1. Finish implement artifacts (code, walkthrough, README, pattern table, story).
+2. Wiki ingest + lint on this branch (`llm-wiki`: example page, Scenario Registry,
+   catalogue / structural status, `log.md`, fix drift you can).
+3. Open branch PR with `Resolves #<issue>` (rebase-merge preferred; do not squash
+   unless the user asks).
+4. After merge, the `example:` issue should auto-close; comment only if needed.
 
 ### Definition of Done checklist
 
@@ -158,8 +171,8 @@ Run when the example is ready to merge or just merged.
 - [ ] Story file matches what the code models
 - [ ] Pattern reference `catrace example` column updated
 - [ ] `docs/wiki/scenario-registry.md` status → Implemented (or Draft if still missing pieces)
-- [ ] Wiki: ingest new/changed story + walkthrough; example page; pattern catalogue status; `log.md` — via `llm-wiki` skill
-- [ ] Close the `example:` issue (comment with example path + PR if any)
+- [ ] Wiki ingest + lint completed **on the branch before push/PR**
+- [ ] PR opened with `Resolves #<n>` (issue closes on merge)
 
 Status becomes **Implemented** only when code + walkthrough + README scenario
 are all present.
