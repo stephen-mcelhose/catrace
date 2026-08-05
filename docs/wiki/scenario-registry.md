@@ -49,3 +49,5 @@ ad-hoc claims. Lint must re-check this page whenever `README.md`,
 - `plans/network-of-healers.md`
 - `examples/prompt_chaining/main.go`
 - `examples/prompt_chaining/WALKTHROUGH.md`
+- `examples/blackboard/main.go`
+- `examples/blackboard/WALKTHROUGH.md`

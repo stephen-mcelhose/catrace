@@ -53,7 +53,7 @@ The pattern catalogue draws from three primary sources:
 - **LG** — VThink Technologies, *Common Agentic Patterns in LangGraph*
 
 Additional catalog ingest (Blackboard only so far):
-- **APC** — [Agent Patterns Catalog — Blackboard](https://www.agentpatternscatalog.org/patterns/blackboard/) (aliases Shared Workspace / Collaboration Whiteboard; forbids out-of-band A2A; alternative-to Supervisor; complements Swarm; generalises Stigmergic Coordination). Wiki page: [[Agent Patterns Catalog — Blackboard]]. Status remains 🔲 Planned — no example code.
+- **APC** — [Agent Patterns Catalog — Blackboard](https://www.agentpatternscatalog.org/patterns/blackboard/) (aliases Shared Workspace / Collaboration Whiteboard; forbids out-of-band A2A; alternative-to Supervisor; complements Swarm; generalises Stigmergic Coordination). Wiki page: [[Agent Patterns Catalog — Blackboard]]. catrace status: ✅ Implemented — `examples/blackboard/` ([[Example: Blackboard]], README scenario 7).
 
 ## catrace modeling approach
 

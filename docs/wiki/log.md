@@ -205,3 +205,22 @@ Unfixable / needs human:
 - Story revised (catalog-aligned opportunistic accretion); issue #11 AC updated
 - Code: `examples/blackboard/{main.go,WALKTHROUGH.md}` — MFPT undiagnosed→confirmed ≈ 10.41; Trace IsTraceOf true
 - README scenario 7; pattern reference `blackboard`; [[Scenario Registry]] Implemented; [[Example: Blackboard]]; [[Structural Patterns]] §10; catalogue row 10 ✅
+
+## [2026-08-05] lint | 22 wiki pages checked (excl. raw/), 4 issues found, 4 fixed
+
+Checked: orphans/wikilinks, index coverage, frontmatter, Scenario Registry ↔ README 1–7, Implemented = main.go+WALKTHROUGH, catalogue/structural/APC/joint-kernels ↔ registry for Blackboard, plans vs README numbers.
+
+Clean:
+- No content orphans; all knowledge pages indexed; no real broken wikilinks (false positives: `[[Page Slug]]` / `[[wikilinks]]` in log prose, `[[0, 1]]` in example output)
+- README scenarios 1–7 match [[Scenario Registry]]; scenario 7 Implemented with `examples/blackboard/{main.go,WALKTHROUGH.md}`
+- Catalogue row 10, [[Structural Patterns]] §10, [[Agent Patterns Catalog — Blackboard]], [[Example: Blackboard]], [[Wiki Index]], [[catrace API]] examples table already consistent Implemented
+- `plans/network-of-healers.md` correctly unnumbered (not README scenario 5)
+- `AGENTS.md` walkthrough count 6 and story count 17 match disk
+
+Fixed:
+- [[Agentic Patterns Catalogue]] APC blurb: stale “🔲 Planned — no example code” → ✅ Implemented `examples/blackboard/`
+- [[Joint Kernels and Coupling]]: “Planned Blackboard” → Implemented; sources note; link [[Example: Blackboard]] in construction/analysis
+- [[Scenario Registry]] Sources: add blackboard main.go + WALKTHROUGH
+
+Unfixable / needs human:
+- Active `wiki-knowledge-graph` Graph A/B baseline still pre–Prompt Chaining / Blackboard / APC page growth — re-baseline before final Verdict ([[Experiment Registry]] lint note)
