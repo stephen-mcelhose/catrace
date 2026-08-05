@@ -1,11 +1,18 @@
 ---
 name: review
-description: Review code changes for quality, bugs, and improvements. Use when the user asks to review changes, check a PR, or review code before committing.
+description: >
+  Review code or docs changes. Default is normal review (correctness, clarity,
+  conventions). Use GAN/adversarial mode when the user asks for GAN review or
+  when reviewing merge-critical code (package-root Go, experiments/*/main.go,
+  merge-ready runnable PRs). Also triggers on "review changes", "check a PR",
+  "review before committing".
 license: MIT
 allowed-tools:
   # Version control (read-only)
   - Bash(git:*)
   - Bash(gh pr:*)
+  - Bash(gh:* --jq:*)
+  - Bash(jq:*)
   # File tools (always needed)
   - Read
   - Glob
@@ -23,12 +30,24 @@ allowed-tools:
   # Note: Language-specific tools are added when you read the corresponding
   # reference file (e.g., go_review.md adds Go tools, typescript_review.md adds TS tools)
 metadata:
-  version: "2.5.0"
+  version: "3.1.0"
 ---
 
 # Code Review
 
-Review code changes systematically for quality, correctness, security, and maintainability.
+When inspecting `gh`/API JSON in the shell, **prefer `jq` / `gh --jq`**.
+
+## Choose mode (do this first)
+
+| Mode | When |
+|------|------|
+| **Normal** (default) | Docs, plans, wiki, example polish, general “review this” |
+| **GAN** (adversarial) | User asks for GAN / adversarial review; **or** diff is merge-critical: package-root `*.go`, `experiments/*/main.go`, or a PR about to merge runnable behavior |
+
+State the chosen mode in one line at the start of the review.
+
+- **Normal:** correctness, clarity, conventions, maintainability. Not “try to break it.”
+- **GAN:** assume the implementation is wrong until proven otherwise; prefer concrete failures; use attacks table. Walkthroughs are not GAN (peer-code-review only if asked).
 
 ## Workflow
 
@@ -86,10 +105,13 @@ gh pr diff <number>
 | GitHub Actions       | [references/github_actions_review.md](./references/github_actions_review.md) |
 | API/Protobuf         | [references/api_review.md](./references/api_review.md)                   |
 
-3. Always read security guidelines regardless of language:
+3. Always read security guidelines:
    - [references/security_review.md](./references/security_review.md)
 
-> **Note:** These reference files contain critical review criteria. Load them NOW before proceeding to static analysis.
+4. If mode is **GAN**, also read:
+   - [references/gan_review.md](./references/gan_review.md)
+
+> **Note:** Load language + security refs before analysis. Load GAN ref only in GAN mode.
 
 ### 4. Run Static Analysis
 
@@ -172,49 +194,62 @@ LspDiagnostics(path: "src/file.ts")
 - [ ] Edge cases covered
 - [ ] Tests are readable
 
-### 8. Provide Structured Feedback
+### 8a. Normal mode — structured feedback
 
-## Output Format
-
-> **Important:** When referencing files in your response, always use clickable file annotations:
->
-> - Format: `[filename:line](path/to/file:line)`
-> - Example: `[user.ts:42](src/models/user.ts:42)`
-> - This allows users to click directly to the referenced location
+> File refs: `[filename:line](path/to/file:line)`.
 
 ```markdown
-## Summary
-Brief overview of the changes and overall assessment.
+## Mode: normal
 
-## Analysis Results
-Output from static analysis tools (if run).
+## Summary
+Brief overview and assessment.
 
 ## Issues
-- **[filename:line](path/to/file:line) SEVERITY** Description and suggested fix
-
-Example:
-- **[auth.ts:127](src/auth/auth.ts:127) HIGH** Missing null check before accessing user.email
+- **[file:line](path) SEVERITY** Description and suggested fix
 
 ## Suggestions
-- **[filename:line](path/to/file:line)** Optional improvement ideas
-
-## Pattern Compliance
-- [ ] Follows csgda-kit patterns (for Go)
-- [ ] Uses csgda-platform-actions (for CI/CD)
-- [ ] Follows language best practices
+- Optional improvements
 
 ## Verdict: Approved / Changes Requested
-Final decision with reasoning.
 ```
 
-## Severity Levels
+Severity for normal mode: **CRITICAL** / **HIGH** / **MEDIUM** / **LOW**.
 
-| Level        | Description                                          |
-|--------------|------------------------------------------------------|
-| **CRITICAL** | Security vulnerability, data loss risk, crash        |
-| **HIGH**     | Bug, significant performance issue, breaking change  |
-| **MEDIUM**   | Code smell, minor performance issue, maintainability |
-| **LOW**      | Style, naming, optional improvements                 |
+### 8b. GAN mode — attack then report
+
+Before writing, try to break the diff:
+
+1. List MUST/SHOULD behaviors (tests, walkthrough, PR body).
+2. Invent inputs/sequences that should fail if the code is weak.
+3. Prefer a failing test or exact repro.
+4. Classify: `blocker` / `major` / `minor` / `note`.
+
+Domain angles: non-stochastic rows, joint index mismatches, Kronecker where
+coupling was claimed, Stationary on non-ergodic chains, Trace with recurrent
+hidden states, MFPT convention vs docs, silent ignored errors.
+
+```markdown
+# GAN review
+
+## Scope
+- Base / head:
+- Files:
+
+## Attacks
+| # | Attack | Result | Severity |
+|---|--------|--------|----------|
+| 1 | … | reproduced / not reproducible | blocker |
+
+## Required fixes before ship
+- …
+
+## Residual risk
+- …
+
+## Verdict: ship / changes required
+```
+
+Do **not** soft-pass blockers. Style-only nits are `note`.
 
 ## Git Commands (Read-Only)
 

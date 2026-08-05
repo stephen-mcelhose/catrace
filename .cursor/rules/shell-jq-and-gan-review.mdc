@@ -1,0 +1,33 @@
+---
+description: Prefer jq for JSON; GAN review when asked or for merge-critical code
+alwaysApply: true
+---
+
+# Shell JSON and reviews
+
+## Prefer jq for JSON
+
+When parsing or inspecting JSON from `gh`, APIs, or files in the shell, **prefer `jq`** (or `gh … --jq`) over Python/node one-liners so output is glanceable in the terminal.
+
+```bash
+# Good
+gh issue list --limit 20 --json number,title,state \
+  | jq -r '.[] | "\(.number)\t\(.state)\t\(.title)"'
+
+gh pr view 22 --json title,state,url --jq '"\(.state)\t\(.title)\t\(.url)"'
+```
+
+Use Python only when the transform is awkward in jq. Prefer printing final tables via jq when practical.
+
+## Reviews: normal by default; GAN when it matters
+
+**Default review** = correctness, clarity, conventions (docs, plans, wiki, example polish). Not adversarial.
+
+**GAN / adversarial review** (try to break the change) when:
+
+1. The user explicitly asks for GAN / adversarial review, or
+2. The diff is **merge-critical code**: library `*.go` (package root), `experiments/*/main.go`, or a PR about to merge that ships runnable behavior
+
+Author walkthroughs only when the user asks for peer-code-review / walkthrough.
+
+Follow `.agents/skills/review/SKILL.md` for mode selection and GAN output format.

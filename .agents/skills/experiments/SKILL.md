@@ -182,6 +182,7 @@ Always includes § Status check & maintain.
 
 ## Rules
 
+- When parsing `gh` JSON, prefer `jq` / `gh --jq` (project rule).
 - **Check and maintain status every time** this skill runs lint/sync — do not
   only report drift.
 - Never fill Results when only filing predictions unless the user asks to run.
