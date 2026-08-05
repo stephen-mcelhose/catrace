@@ -2,22 +2,90 @@
 
 ## What this example introduces
 
-`self_healing_nodes` asked which of two loops — the node's own throttle or the
-evolver's config search — does the real recovery work. This example asks the next
-question: **how does the topology of connections between nodes change the system's
-ability to recover?**
+`self_healing_nodes` studied a **single** node plus an outer config loop. This
+example drops the shared evolver and asks a different question:
 
-Four configurations of two self-healing nodes plus one shared evolver are run as
-variants and compared head-to-head. The structural novelty is that coupling between
-nodes is topology-specific, encoded entirely in $A_\text{joint}$: the same node and
-evolver kernels are reused across all four topologies, and only the inter-node action
-effects change.
+> Several identical self-healing nodes sit on a real-ish dependency graph.
+> Each node's world is pushed around by its **in-neighbors and out-neighbors**.
+> The true joint story is large; the story we actually tell (ops dashboard,
+> SLO, "is the pool OK?") is a **collapsed** one. What does that collapse
+> preserve, and what does it hide?
+
+Structural novelties relative to existing examples:
+
+1. **Graph-shaped coupling** — edges mean load / backpressure into a node's
+   world dynamics, not a free ±spill parameter dressed up as "topology."
+2. **Collapsing the story** — full joint \(J\) is built, then `Trace` reduces
+   it to coarse operator-visible buckets; `IsTraceOf` confirms the collapse.
+3. **Optional second act** — estimate the collapsed kernel from a long joint
+   trajectory observed only through those coarse labels
+   (`EstimateKernelFromSequence`), and compare to the exact Trace.
+
+This does **not** need to re-litigate throttle-vs-evolver. Reuse one per-node
+parameter set (default: Variant B from `self_healing_nodes` — weak local heal,
+so neighbor stress is visible). If Variant A vs B later makes a nice contrast
+under the same graph, that is optional spice, not the thesis.
 
 This is a **planned** example (not yet a README scenario). As of 2026-08-04,
 `README.md` scenario 5 is the three-agent majority-valid coordination network
-(`docs/patterns/story-supervisor.md`, not implemented). Do not claim a README
-scenario number for this plan until the modelling premise is settled and the
-README scenario list is deliberately updated. See wiki `[[Scenario Registry]]`.
+(`docs/patterns/story-supervisor.md`). Do not claim a README scenario number
+until the premise is settled and the README list is deliberately updated. See
+wiki `[[Scenario Registry]]`.
+
+---
+
+## Y-statement
+
+**We are building** a multi-node example where identical self-healing workers
+sit on an explicit dependency graph and the joint health story is collapsed to
+coarse pool labels, **for** readers who already understand one-node
+`self_healing_nodes` and want the next real-ish step (wiring + partial
+observation), **so that** we can measure what graph edges do to recovery and
+what a dashboard-sized story loses — **without** folding in a shared evolver
+or human operator yet.
+
+**Why this route (not the alternatives):**
+
+| Alternative | Why not (for v1) |
+|-------------|------------------|
+| Keep shared evolver from `self_healing_nodes` | Mixes **control plane** (mutate/promote) with **data-plane graph** (load edges); re-opens throttle-vs-evolver on a larger state space before graph + collapse are clear |
+| “Topology” as ±spill floats only | Dresses a parameter as wiring; HO vs OH asymmetry under a real \(1\to2\) edge is the signature we want |
+| Operator/on-call as a third agent in v1 | Valuable sequel; first we need a clean observation map (collapse) those agents would read |
+| Heterogeneous per-node kernels (different weights) | Parked — see below; identical nodes isolate *graph* effects from *node identity* effects |
+
+**Parked for implementation sequencing (hypotheses already filed):** whether each
+self-healing node should carry different weights / Variant A vs B kernels /
+asymmetric heal strength. That question is about **node identity**, not wiring.
+Run after identical-node graph + collapse are working:
+
+| Experiment | Claim | Issue |
+|------------|-------|-------|
+| `experiments/heal-on-critical-path` | Strong heal belongs on the downstream sink more than on the upstream feeder | #33 |
+| `experiments/collapse-masks-heterogeneity` | Strong-sink / weak-feeder makes `pool_ok` look healthier than joint upstream-overload warrants | #34 |
+
+---
+
+## Real-ish scenario (no shared evolver)
+
+A small worker pool / pipeline: each machine is the same self-healing node
+(EMA error band → push / throttle / idle). Work has directed edges:
+
+- **Upstream → downstream (load):** when an upstream node pushes or is
+  overloaded, it dumps work onto its out-neighbors and raises their chance of
+  degrading / overloading.
+- **Downstream → upstream (backpressure, optional on some graphs):** when a
+  downstream node is overloaded, upstream push becomes less effective / more
+  risky (queues fill).
+
+Each node still **perceives only its own EMA** and **decides independently**
+(Kronecker \(D\)). Coupling lives in how neighbors change the next world —
+i.e. in \(A_\text{joint}\), conditioned on the current joint world (who is
+actually overloaded) and the joint action (who is pushing).
+
+There is **no** pool-wide evolver agent in v1. The "outside view" is not an
+agent in the product space; it is the **observation map** used for Trace
+(collapsing the story). See "Operator / evolver (deferred discussion)" below
+for how a real operator or config loop would re-enter later.
 
 ---
 
@@ -33,368 +101,274 @@ Each node is the same 3-state agent:
 | Experience | `ema_low`, `ema_mid`, `ema_high`    |
 | Action     | `push`, `throttle`, `idle`          |
 
-Use Variant B parameters from `self_healing_nodes` as the baseline — the harder
-regime where self-healing alone is unreliable. This makes topology differences more
-visible.
+Default kernels: Variant B `nodeP`, `nodeD`, `nodeA` from
+`examples/self_healing_nodes/main.go` (no `mutationBoost` — no evolver).
 
-### Shared evolver
+### Joint world space (2 nodes, no evolver)
 
-One evolver monitors the aggregate pool score across both nodes:
+Joint world = `(node1_health · node2_health)`, row-major, node1 outermost.
 
-| Layer      | States                          |
-|------------|---------------------------------|
-| World      | `good_strategy`, `bad_strategy` |
-| Experience | `high_score`, `low_score`       |
-| Action     | `promote`, `mutate`             |
+| Index | State | Node 1     | Node 2     |
+|-------|-------|------------|------------|
+| 0     | HH    | healthy    | healthy    |
+| 1     | HD    | healthy    | degraded   |
+| 2     | HO    | healthy    | overloaded |
+| 3     | DH    | degraded   | healthy    |
+| 4     | DD    | degraded   | degraded   |
+| 5     | DO    | degraded   | overloaded |
+| 6     | OH    | overloaded | healthy    |
+| 7     | OD    | overloaded | degraded   |
+| 8     | OO    | overloaded | overloaded |
 
-Pool score now degrades as a function of **how many** nodes are sick, not just one.
-
-### Joint world space (2 nodes + evolver)
-
-Joint world state = `(node1_health · node2_health · evolver_strategy)`.
-Ordered row-major: node1 outermost, evolver innermost.
-
-| Index | State  | Node 1     | Node 2     | Evolver           |
-|-------|--------|------------|------------|-------------------|
-| 0     | HH·G   | healthy    | healthy    | good_strategy     |
-| 1     | HH·B   | healthy    | healthy    | bad_strategy      |
-| 2     | HD·G   | healthy    | degraded   | good_strategy     |
-| 3     | HD·B   | healthy    | degraded   | bad_strategy      |
-| 4     | HO·G   | healthy    | overloaded | good_strategy     |
-| 5     | HO·B   | healthy    | overloaded | bad_strategy      |
-| 6     | DH·G   | degraded   | healthy    | good_strategy     |
-| 7     | DH·B   | degraded   | healthy    | bad_strategy      |
-| 8     | DD·G   | degraded   | degraded   | good_strategy     |
-| 9     | DD·B   | degraded   | degraded   | bad_strategy      |
-| 10    | DO·G   | degraded   | overloaded | good_strategy     |
-| 11    | DO·B   | degraded   | overloaded | bad_strategy      |
-| 12    | OH·G   | overloaded | healthy    | good_strategy     |
-| 13    | OH·B   | overloaded | healthy    | bad_strategy      |
-| 14    | OD·G   | overloaded | degraded   | good_strategy     |
-| 15    | OD·B   | overloaded | degraded   | bad_strategy      |
-| 16    | OO·G   | overloaded | overloaded | good_strategy     |
-| 17    | OO·B   | overloaded | overloaded | bad_strategy      |
-
-18 joint world states. 9 joint experience states (3×3 node experiences × 2 evolver
-experiences = 18, but evolver experience is derived from world + node healths so also
-18). Joint action space = 3×3×2 = 18.
+9 joint world states. Joint experience = 3×3 = 9. Joint action = 3×3 = 9.
+All of \(P_\text{joint}\), \(D_\text{joint}\), \(A_\text{joint}\), \(J\) are 9×9.
 
 ### Extending to 3 nodes
 
-With 3 nodes + evolver: $3^3 \times 2 = 54$ world states, $3^3 \times 2 = 54$
-experience states, $3^3 \times 2 = 54$ action states. The joint kernel J is 54×54.
-This is tractable for catrace's matrix operations but the coupling loops become
-4-deep. **Treat 3-node extension as a stretch goal** — implement 2-node first and
-verify the topology comparison is legible, then decide whether 3-node adds enough.
+\(3^3 = 27\) world / experience / action states; \(J\) is 27×27. Tractable.
+Use 3 nodes when a graph distinction needs it (e.g. chain vs fork vs ring).
+**Implement 2-node first**; add a third node once collapse + one graph contrast
+are legible.
+
+---
+
+## Graphs (variants)
+
+A graph is a set of directed influence rules applied when building
+\(A_\text{joint}\). Recommended v1 set:
+
+| Variant | Name | Edges | Meaning |
+|---------|------|-------|---------|
+| 1 | Independent | none | Control: two self-healers, no load coupling |
+| 2 | Linear chain | \(1 \to 2\) load | Pipeline: node1 feeds node2 |
+| 3 | Bidirectional | \(1 \leftrightarrow 2\) load | Shared pool / mutual spill |
+
+Optional later (3-node): chain \(1\to2\to3\), fan-in \(1,2\to3\), ring.
+Do **not** invent a "protective pair" as a fourth fake topology unless it
+corresponds to a real edge semantics (e.g. explicit load-shed edge).
+
+### Coupling rule (world-conditioned load)
+
+Prefer realism over the old action-only spill shortcut:
+
+```
+When building the next-world row for node v, start from nodeA[v's action].
+For each in-neighbor u:
+  if u's current world is overloaded (or degraded, with smaller weight)
+     AND u's action is push:
+       boost v's degraded/overloaded mass by spillRate, then renormalize
+```
+
+So spill requires **both** "neighbor is actually sick" and "neighbor is still
+pushing" — closer to shedding load under stress. Document the rates in code
+constants (`spillOverloaded`, `spillDegraded`).
+
+Backpressure (optional, bidirectional variant only): if out-neighbor is
+overloaded, damp the local node's `healthy` mass after `push` (queues won't
+drain). Keep off for linear-chain v1 to isolate one mechanism.
 
 ---
 
 ## Kernel construction
 
-### $P_\text{joint}$ (18×18)
+### \(P_\text{joint}\) (9×9) — local perception
 
-The evolver's perceived pool score now degrades with the **count** of sick nodes.
-Define a severity score $s = \text{num\_degraded} + 2 \times \text{num\_overloaded}$
-(overloaded counts double because it is the worse state). Scale the evolver's
-`high_score` probability linearly down from its baseline:
+Each node perceives from **its own** world only (Kronecker of `nodeP`):
 
 ```
-evolverHighScore(s) = max(baserate - s × penaltyPerSick, 0)
+P_joint[(w1,w2), (x1,x2)] = nodeP[w1,x1] * nodeP[w2,x2]
 ```
 
-where `baserate = 0.85` (both healthy, good strategy) and `penaltyPerSick = 0.20`.
+No cross-perception in v1 (nodes do not see neighbors' EMAs). That keeps
+"collapsing the story" as an **external** observation problem, not something
+the nodes themselves solve.
 
-So:
-- s=0 (HH): P(high_score | good) = 0.85
-- s=1 (one degraded): 0.65
-- s=2 (two degraded or one overloaded): 0.45
-- s=3 (one degraded + one overloaded): 0.25
-- s=4 (two overloaded): 0.05
-
-Construction loop (pseudo-code):
-```
-for n1w, n2w, ew in joint_world_states:
-    s = severity(n1w, n2w)
-    for n1x, n2x, ex in joint_experience_states:
-        P_joint[n1w·n2w·ew, n1x·n2x·ex] =
-            nodeP[n1w, n1x] * nodeP[n2w, n2x] *
-            evolverPCoupled(s, ew, ex)
-```
-
-### $D_\text{joint}$ (18×18)
-
-Kronecker product — all three agents decide independently from their own experience:
+### \(D_\text{joint}\) (9×9) — independent decisions
 
 ```
-D_joint[n1x·n2x·ex, n1g·n2g·eg] =
-    nodeD[n1x, n1g] * nodeD[n2x, n2g] * evolverD[ex, eg]
+D_joint[(x1,x2), (g1,g2)] = nodeD[x1,g1] * nodeD[x2,g2]
 ```
 
-### $A_\text{joint}$ (18×18) — topology-specific
+### \(A_\text{joint}\) (9×9) — graph coupling
 
-This is where the four topologies diverge.
+PDA composition needs \(A: G \to W\), but neighbor influence depends on the
+**current** world. Two implementation options (pick one; document in code):
 
-**Baseline (independent):** pure Kronecker product. No inter-node coupling.
-
-```
-A_joint[n1g·n2g·eg, n1w'·n2w'·ew'] =
-    nodeA_eff(n1g, eg)[n1w'] * nodeA_eff(n2g, eg)[n2w'] * evolverA[eg, ew']
-```
-
-where `nodeA_eff(ng, eg)` applies the mutation boost if `eg=mutate`, same as
-`self_healing_nodes`.
-
-**Linear chain:** node 1 feeds into node 2. When node 1 is overloaded, its excess
-load spills to node 2, increasing node 2's probability of degrading. Node 2 has no
-effect on node 1.
-
-Modify node 2's effective action row based on node 1's **current action** (the action
-just chosen, not the next world state):
+**Preferred for correctness:** build \(J\) by enumerating
+`(w, x, g) → w'` micro-paths (or build a world-dependent family of A slices
+and form \(W = \sum\) appropriately). Practically: nest loops over
+`w1,w2, g1,g2, w1',w2'` with
 
 ```
-spillBoost = 0 if n1g ∈ {push, throttle} and node1 not overloaded
-           = 0.15 if n1g = push and node1 = overloaded (spill load)
-           = 0.05 if n1g = throttle and node1 = overloaded
-
-node2A_eff[ng2][degraded] += spillBoost
-node2A_eff[ng2][overloaded] += spillBoost × 0.5
-renormalize node2A_eff row
+row1 = adjust(nodeA[g1], influences from neighbors given (w1,w2,g1,g2), graph)
+row2 = adjust(nodeA[g2], ...)
+A_eff[(g1,g2), (w1',w2') | (w1,w2)] = row1[w1'] * row2[w2']
 ```
 
-More precisely, spill is conditioned on node 1's **world state** (since that is what
-determines whether it is actually shedding load):
+then fold with P and D into \(J[(w1,w2),(w1',w2')]\).
 
-```
-for each n1g, n2g, eg:
-    if node1_is_overloaded(n1g, current_n1w):  # n1w is the from-world-state
-        node2_row = spillAdjust(nodeA_eff(n2g, eg), spillRate)
-    else:
-        node2_row = nodeA_eff(n2g, eg)
-    A_joint[n1g·n2g·eg, n1w'·n2w'·ew'] =
-        nodeA_eff(n1g, eg)[n1w'] * node2_row[n2w'] * evolverA[eg, ew']
-```
+**Simpler approximation (acceptable for first cut):** ignore world conditioning
+in A; spill only from `gi == push`. Note explicitly as a simplification in the
+walkthrough (same caveat as the old plan).
 
-Note: the from-world-state is encoded in the A_joint row index. A_joint rows are
-joint actions `(n1g, n2g, eg)`, but we need to condition spill on from-world-state
-too. This means the loop must iterate over from-world-states as well — A_joint
-becomes a function of `(from_world, joint_action)` in the coupling case. Encode
-this by building a separate effective A matrix for each from-world partition.
-
-**Alternative simpler encoding:** Treat the spill as a fixed fractional boost to
-node 2's `degraded` entry whenever node 1's **action** is `push` (aggressive action
-implies node 1 is pushing hard, which transfers load). This avoids conditioning on
-world state and keeps the construction loop clean at the cost of some realism:
-
-```
-spillRate = 0.10   # push action from node1 spills 10pp onto node2's degraded entry
-if n1g = push:
-    node2_row = boost(nodeA_eff(n2g, eg), degraded, spillRate)
-else:
-    node2_row = nodeA_eff(n2g, eg)
-```
-
-**Recommendation:** use the action-conditioned version (simpler) for the initial
-implementation and note in the walkthrough why it's a simplification.
-
-**Parallel redundant:** nodes share a load pool. When one node degrades, the other
-absorbs its work, increasing its own overload probability. Symmetric: each node's
-action affects the other's effective A row.
-
-```
-mutualSpill = 0.08   # symmetric — each node spills onto the other
-
-for n1g, n2g, eg:
-    node1_row = boost(nodeA_eff(n1g, eg), overloaded, mutualSpill if n2g=push else 0)
-    node2_row = boost(nodeA_eff(n2g, eg), overloaded, mutualSpill if n1g=push else 0)
-    renormalize both rows
-    A_joint[n1g·n2g·eg, n1w'·n2w'·ew'] =
-        node1_row[n1w'] * node2_row[n2w'] * evolverA[eg, ew']
-```
-
-**Ring:** same as parallel redundant for 2 nodes (a 2-node ring is bidirectional by
-definition). With 3 nodes a ring differs from parallel — include this topology in the
-3-node extension, not the 2-node implementation. For 2 nodes, **merge ring with
-parallel redundant** or drop ring and use 3 topologies only.
-
-**Recommended final topology set (2-node):**
-
-| Variant | Name           | Inter-node coupling in $A_\text{joint}$              |
-|---------|----------------|------------------------------------------------------|
-| 1       | Independent    | None — pure Kronecker                                |
-| 2       | Linear chain   | node1 push → boosts node2 degraded/overloaded prob   |
-| 3       | Parallel load  | each node push → boosts other's overloaded prob      |
-| 4       | Protective pair| each node throttle → reduces other's overloaded prob |
-
-Variant 4 (protective pair) is the optimistic dual of variant 3: nodes that throttle
-actively shed load to neighbors, reducing their stress. This gives a nice 2×2 grid:
-independent × load-transfer direction × whether transfer is harmful or helpful.
+Compose \(J = P_\text{joint}\, D_\text{joint}\, A_\text{joint}\) only when A is
+not world-conditioned; otherwise assemble \(J\) from the nested loops above
+(still a valid row-stochastic square kernel on joint W).
 
 ---
 
-## Analysis to run per topology
+## Collapsing the story (primary analysis)
 
-```go
-// 1. Stationary distribution
-pi, _ := J.Stationary(1e-12, 5000)
+### Operator-visible coarse states
 
-// 2. MFPT: worst joint state → best joint state
-//    worst = OO·B (index 17), best = HH·G (index 0)
-mfptWorstBest, _ := J.MeanFirstPassage(17, 0)
+Define an observation partition of the 9 joint worlds — the "dashboard":
 
-// 3. MFPT: any-degraded → all-healthy
-//    Compute for each degraded starting state, report min/max/mean
-degradedStates := []int{2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17}
-for _, s := range degradedStates:
-    mfpt, _ := J.MeanFirstPassage(s, 0)
+| Coarse label | Joint worlds | Ops meaning |
+|--------------|--------------|-------------|
+| `pool_ok` | `{HH}` | All green |
+| `pool_stressed` | `{HD, DH, HO, OH, DD}` | Partial / uneven sickness |
+| `pool_down` | `{DO, OD, OO}` | At least one overloaded + partner sick, or both overloaded |
 
-// 4. Entropy rate
-h, _ := J.EntropyRate(2)
+(Exact membership can be tuned; freeze before reading metrics.)
 
-// 5. Trace onto {HH·G=0, OO·B=17}
-trace, _ := J.Trace([]int{0, 17}, 1e-12)
-ok, _   := trace.IsTraceOf(J, []int{0, 17}, 1e-12)
-piTrace, _ := trace.Stationary(1e-12, 5000)
+**Important:** Trace in catrace is defined on a **subset** of states (induced
+chain), not on an arbitrary partition into superstates. Two approaches:
 
-// 6. Coarse trace onto {all-healthy, any-degraded, majority-failed}
-//    all-healthy  = {0,1}           (HH·G, HH·B)
-//    majority-failed = {8..17}      (DD, DO, OD, OO — both nodes sick)
-coarseSubset := []int{0, 1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}
-// Or three-state: all-healthy={0,1}, one-sick={2..7}, both-sick={8..17}
+1. **Subset Trace (exact API):** pick representative extremes
+   `Trace([]int{HH, OO})` — peak vs worst — same pattern as
+   `self_healing_nodes`. Show `IsTraceOf`, π on the subset.
+2. **Partition collapse (story):** for the 3-bucket dashboard, either
+   - lump by analyzing π mass and MFPT **on the full J** with sets as
+     targets (MFPT into the set `pool_ok`), and report set-occupancy from π; or
+   - build an explicit lumped chain only if we add a helper / do it by hand
+     for the walkthrough.
+
+v1 recommendation: use (1) for the Trace API demo, and report (2) as
+**set statistics on J** (π(set), mean MFPT from each `pool_down` state into
+`HH`) so the "collapsed story" is narrative + numbers without faking a
+partition-Trace the library does not provide.
+
+Optional second act: sample a long trajectory on J, map each step to
+`{pool_ok, pool_stressed, pool_down}`, estimate a 3×3 kernel, compare
+qualitatively to the set-to-set flow implied by J.
+
+### Metrics per graph
+
+```
+π on all 9 states; π(pool_ok), π(pool_down)
+MFPT(OO → HH), MFPT(HO → HH), MFPT(OH → HH)   // asymmetry under chain
+H(J)
+Trace onto {HH, OO}: IsTraceOf, π_trace
 ```
 
-**Comparative output table** (printed for all 4 topologies):
+Comparative table:
 
 ```
-Topology           | π(HH·G)  | π(OO·B)  | MFPT OO·B→HH·G | H (bits/step)
-Independent        |  0.XXXX  |  0.XXXX  |   X.XX         |  X.XXXX
-Linear chain       |  0.XXXX  |  0.XXXX  |   X.XX         |  X.XXXX
-Parallel load      |  0.XXXX  |  0.XXXX  |   X.XX         |  X.XXXX
-Protective pair    |  0.XXXX  |  0.XXXX  |   X.XX         |  X.XXXX
+Graph          | π(HH) | π(OO) | MFPT OO→HH | MFPT HO→HH | MFPT OH→HH | H
+Independent    |  ...  |  ...  |    ...     |    ...     |    ...     | ...
+Linear chain   |  ...  |  ...  |    ...     |    ...     |    ...     | ...
+Bidirectional  |  ...  |  ...  |    ...     |    ...     |    ...     | ...
 ```
+
+Under linear chain, expect **HO→HH vs OH→HH asymmetry** (downstream sick vs
+upstream sick) — that is the signature that the graph is doing real work.
+Independent should be symmetric.
 
 ---
 
 ## Code structure
 
 ```go
-type topology struct {
+type graph struct {
     name string
-    // interNodeSpill: how much n1's push action boosts n2's degraded prob (linear)
-    // interNodeSpillSymmetric: whether n2 also affects n1 (parallel/protective)
-    // spillSign: +1 for harmful (load transfer), -1 for protective (load shedding)
-    n1ToN2Spill float64
-    n2ToN1Spill float64
-    spillTriggerAction int // 0=push, 1=throttle, 2=idle
-    spillTargetState   int // 0=healthy, 1=degraded, 2=overloaded
+    // loadEdge[u][v] = spill rate from u onto v when u overloaded & pushing
+    loadEdge [2][2]float64
 }
 
-func runTopology(t topology) results { ... }
-
-func main() {
-    topologies := []topology{
-        {name: "Independent",     n1ToN2Spill: 0,    n2ToN1Spill: 0   },
-        {name: "Linear chain",    n1ToN2Spill: 0.10, n2ToN1Spill: 0,
-         spillTriggerAction: push, spillTargetState: degraded},
-        {name: "Parallel load",   n1ToN2Spill: 0.08, n2ToN1Spill: 0.08,
-         spillTriggerAction: push, spillTargetState: overloaded},
-        {name: "Protective pair", n1ToN2Spill: -0.08, n2ToN1Spill: -0.08,
-         spillTriggerAction: throttle, spillTargetState: overloaded},
-    }
-    for _, t := range topologies {
-        runTopology(t)
-    }
-    printComparisonTable(results)
-}
+func buildJoint(g graph) *catrace.Kernel  // returns J on 9 joint worlds
+func analyze(name string, J *catrace.Kernel)
 ```
 
-Kernel construction helpers:
+Reuse `nodeP` / `nodeD` / `nodeA` constants from Variant B; no evolver blocks.
 
-```go
-// effectiveNodeRow returns the node's A row (3 entries) after applying
-// mutation boost (if evolver mutated) and inter-node spill adjustment,
-// then renormalizing.
-func effectiveNodeRow(baseA [3][3]float64, ng int, eg int,
-    mutationBoost [3]float64, spillDelta float64, spillTarget int) [3]float64
-```
+HTML: `ToHTML` for J and for the {HH, OO} trace per graph (optional).
 
 ---
 
 ## WALKTHROUGH.md structure (per conventions)
 
-**§1 Opening paragraph:** Positions this after `self_healing_nodes`. That example
-asked which internal loop heals; this asks whether and how the wiring between nodes
-changes system resilience. Structural novelty: topology as a model parameter, not a
-code architecture choice.
+**§1 Opening:** After `self_healing_nodes` (one node + evolver). Here: many
+nodes, graph-shaped load, and collapsing the joint story to what ops would see.
 
-**§2 The story:** Two sentences. Two nodes with the same self-healing mechanism,
-four ways to wire them. Which wiring keeps the system healthiest?
+**§2 Story:** Two (or three) identical self-healing workers on a dependency
+graph. Each only sees its own EMA. Load still crosses edges. The dashboard
+collapses nine joint worlds into a few pool labels — what is lost?
 
-**§3 State spaces:** Per-agent tables for Node 1, Node 2 (same), Evolver. Joint
-world states table (18 rows). Note the systematic naming convention.
+**§3 State spaces:** One node table (shared by all); joint 9-state table.
+No evolver table.
 
-**§4 Coupling:** Three bullets — P_joint (aggregate severity score), D_joint
-(Kronecker), A_joint (topology-specific spill, one sub-bullet per topology variant).
+**§4 Coupling:** \(P\) local Kronecker; \(D\) Kronecker; \(A\) / \(J\) carry
+graph load edges (world-conditioned spill).
 
-**§5 Math by hand:** Show the linear-chain $A_\text{joint}$ entry for the
-`push·push·mutate → HD·G` transition:
+**§5 Math by hand:** One linear-chain entry, e.g. contribution to
+`HH → HD` when node1 is healthy-pushing vs when node1 is overloaded-pushing
+(show the spill term turning on).
 
-```
-node1A_eff[push] = {0.55, 0.35, 0.10}   (Variant B baseline)
-spill onto node2 degraded: +0.10
-node2A_eff[push] = {0.55, 0.35+0.10, 0.10} = {0.55, 0.45, 0.10} → renorm by 1.10
-               = {0.50, 0.409, 0.091}
+**§6 Output:** Per-graph π, MFPT table (including HO vs OH), entropy, Trace
+{HH, OO}. Interpret asymmetry under chain.
 
-evolverA[mutate → good] = 0.60
-
-A_joint[push·push·mutate → HD·G] = 0.55 × 0.409 × 0.60 = 0.135
-```
-
-Compare with independent topology (no spill):
-
-```
-A_joint[push·push·mutate → HD·G] = 0.55 × 0.35 × 0.60 = 0.116
-```
-
-The spill raises the probability of node 2 degrading by ~16% relative.
-
-**§6 Reading the output:** Show raw terminal output for all 4 topologies — stationary
-distributions, MFPT table, entropy rates, comparative summary table. Two sentences of
-interpretation per result.
-
-**§7 What you can change:** Five experiments:
-1. Increase spill rate — watch MFPT grow for load topologies
-2. Make protective pair's boost stronger — does it beat independent?
-3. Try asymmetric spill (n1→n2 strong, n2→n1 weak) — directional dependency
-4. Extend to 3 nodes — add a third node agent and observe state space growth
-5. Change evolver severity penalty — make evolver blind to node count
+**§7 What you can change:**
+1. Spill rates — strengthen cascade
+2. Add backpressure edge
+3. Switch Variant A nodeA (strong local heal) — does graph matter less?
+4. Three-node chain
+5. Empirical 3-bucket estimated kernel vs set occupancy on J
 
 ---
 
 ## README entry (draft — assign number only when adding to README)
 
-**Story paragraph:** Plain English, no backticks. Four ways to wire two self-healing
-nodes together: unconnected, in series, sharing load symmetrically, or helping each
-other throttle. The wiring is invisible to the nodes themselves — each still reads
-only its own EMA and decides independently. The coupling lives entirely in how one
-node's action changes the other node's world.
+**Story:** Several identical self-healing workers share a dependency graph.
+Each watches only its own error EMA and throttles or pushes on its own. Load
+still crosses edges: an overloaded upstream node that keeps pushing stresses
+its downstream neighbor. The full joint health story is large; the story we
+usually tell is smaller — whether the pool looks OK — and that collapse hides
+which side of the graph is burning.
 
-**State meanings:** Node 1/2 world/experience/action (same as self_healing_nodes),
-Evolver, Joint world states (18 states with naming convention).
+**State meanings:** Per-node world / experience / action (same as
+self_healing_nodes). Joint worlds HH…OO. Coarse pool labels for the collapsed
+story.
 
-**Interpretation bullets:**
-- $P_\text{joint}$ couples evolver perception to aggregate node health (severity score)
-- $D_\text{joint} = D_1 \otimes D_2 \otimes D_\text{evolver}$ — nodes decide independently
-- $A_\text{joint}$ encodes topology: independent (Kronecker), load-transfer (spill boost),
-  protective (spill reduction)
-- Running all four topologies as variants isolates the topological effect from the
-  per-node self-healing effect
+**Interpretation:**
+- Nodes are independent decision-makers (\(D\) Kronecker)
+- Graph edges enter as load (and optional backpressure) in joint world dynamics
+- Trace / set statistics collapse the joint story to operator-visible buckets
+- Graph contrast (esp. HO vs OH MFPT) shows wiring is not cosmetic
 
-**Code line:** `examples/network_of_healers/main.go`
+**Code:** `examples/network_of_healers/main.go`
 
-**Played-out version:** Three paths, all using linear-chain topology:
-- Version A: HH·G — both healthy, node 1 pushes, load spills but node 2 handles it
-- Version B: HO·G — node 2 already overloaded, node 1's push tips it toward OO·B
-- Version C: OO·B → HH·G — both throttle and idle, evolver mutates, recovery in ~3 steps
+---
+
+## Layers: dashboard vs operator vs evolver
+
+Three real-world roles often get smashed together. v1 only implements the
+first as a **collapse map**; the others are sequels.
+
+| Layer | Real world | In the model | v1? |
+|-------|------------|--------------|-----|
+| **Data plane** | Workers + dependency edges | Nodes + load / backpressure in \(A\) / \(J\) | Yes |
+| **Observation** | Grafana / SLO tile (green·yellow·red) | Collapse map: Trace subset `{HH, OO}` + set stats on `{pool_ok, pool_stressed, pool_down}` — **not** an agent; no actions | Yes |
+| **Control plane** | Autoscaler / workerpool evolver | Shared config agent (`self_healing_nodes`): \(P\) from aggregate severity; `mutate` boosts recovery in \(A\) | Deferred |
+| **Exception path** | On-call human | Slow agent: experience = coarse pool label; actions = restart / shed traffic / page (hits many node worlds) | Deferred |
+| **Mesh / LB** | How work is wired | Graph edges and spill rates | Yes (as topology) |
+
+**Dashboard** only *sees* a partition of the true joint state. **On-call**
+acts on that coarse view, rarely and heavily. **Evolver / autoscaler** is a
+continuous control plane over shared config — real, but it products the state
+space by ×2 and reintroduces throttle-vs-mutate on top of the graph.
+
+v1 separates **graph physics** (nodes + edges) from **control plane**
+(operator / evolver) so the collapse story stays clean.
 
 ---
 
@@ -402,8 +376,10 @@ Evolver, Joint world states (18 states with naming convention).
 
 | Risk | Mitigation |
 |------|-----------|
-| State space grows to 54 for 3 nodes — matrix ops may be slow | Benchmark `J.Stationary` on 54×54; catrace uses gonum dense, should be fine |
-| Spill conditioned on joint action only (not from-world) is a simplification | Note clearly in walkthrough; offer world-conditioned version in "what you can change" |
-| Protective pair may need careful parameter tuning to show meaningful improvement over independent | Pre-run mentally: if spill reduces overloaded by 0.08, node's idle baseline is 0.05 — boost can't push below 0; renorm handles it |
-| 18-state chain may make trace onto 3 coarse buckets computationally noisier | Use `IsTraceOf` check; if numerical issues arise, use 2-state trace {HH·G, OO·B} only |
-| Naming 18 states in the joint tables risks reader overload in WALKTHROUGH | Use abbreviated table, refer reader to code comments for full enumeration |
+| World-conditioned A does not factor as a single \(G\to W\) matrix | Assemble \(J\) from nested loops; still expose a square Kernel |
+| Partition "Trace" is not what `Trace([]int)` does | Use subset Trace for API; set π / set MFPT for dashboard narrative |
+| Independent vs chain metrics may be too close under Variant B | Raise spillRate until HO/OH asymmetry is obvious |
+| 3-node stretch grows walkthrough surface area | Gate behind working 2-node collapse story |
+| Naming 9 states still dense | Abbreviated table + code comments |
+| Premise drift vs README scenario 5 | Keep unnumbered until deliberate README edit; Scenario Registry |
+| Heterogeneous node weights / per-node Variant A vs B | **Parked for code** — hypotheses filed: `heal-on-critical-path`, `collapse-masks-heterogeneity` |

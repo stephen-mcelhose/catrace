@@ -98,16 +98,19 @@ The `experiments/` directory is where these comparisons live, separate from the 
 
 ## Pending experiments
 
-Four further experiments are filed and awaiting runs:
+Six further experiments are filed and awaiting runs (the last two depend on
+`network_of_healers`):
 
 | Slug | Claim | Issue |
 |------|-------|-------|
-| `kg-grounding-agent-behavior` | Knowledge graph quality systematically shifts agent behavior — a well-structured graph raises π(understood), lowers MFPT to recovery, and reduces entropy rate; only the Perception kernel P changes between variants | — |
+| `kg-grounding-agent-behavior` | Knowledge graph quality systematically shifts agent behavior — a well-structured graph raises π(understood), lowers MFPT to recovery, and reduces entropy rate; only the Perception kernel P changes between variants | #32 |
 | `spectral-gap-mixing-time` | Spectral gap (1 − \|λ₂\|) rank-orders kernels correctly by empirical mixing speed; a kernel with 2× the spectral gap mixes in roughly half the steps | #25 |
 | `stationary-sensitivity` | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution; low-π rows have negligible effect | #26 |
-| `n-agent-scalability` | The trace chain restores tractability for N-agent networks: a joint kernel built over k^N states can be collapsed to a small observable subset without losing stationary consistency | — |
+| `n-agent-scalability` | The trace chain restores tractability for N-agent networks: a joint kernel built over k^N states can be collapsed to a small observable subset without losing stationary consistency | #27 |
+| `heal-on-critical-path` | On a fixed \(1\to2\) load graph, strong local heal on the downstream sink beats the same heal on the upstream feeder (vertex vs edge remediation) | #33 |
+| `collapse-masks-heterogeneity` | Strong-sink / weak-feeder makes collapsed `pool_ok` look healthier than joint upstream-overload mass warrants — dashboard masking under heterogeneity | #34 |
 
-These experiments extend the methodology into **perception quality** (kg-grounding), **measurement** (spectral gap, sensitivity), and **scale** (N-agent trace collapse). The hypothesis files are in `experiments/<slug>/hypothesis.md`.
+These experiments extend the methodology into **perception quality** (kg-grounding), **measurement** (spectral gap, sensitivity), **scale** (N-agent trace collapse), and **heterogeneous multi-node graphs** (heal placement + collapse masking; blocked on identical-node `network_of_healers` first). The hypothesis files are in `experiments/<slug>/hypothesis.md`.
 
 ## Sources
 

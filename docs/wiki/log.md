@@ -121,3 +121,37 @@ Unfixable / deferred (human judgment):
 
 Propagated: [[Scenario Registry]] linked from index, catalogue, catrace-api, structural-patterns, example-self-healing-nodes.
 No orphans. All wikilinks resolve.
+
+---
+
+## [2026-08-04] ingest | heterogeneous network-of-healers experiments
+
+Filed (pending; blocked on `examples/network_of_healers` identical-node v1 + heterogeneous kernels):
+
+- `experiments/heal-on-critical-path/hypothesis.md` — strong heal on downstream sink vs upstream feeder
+- `experiments/collapse-masks-heterogeneity/hypothesis.md` — pool_ok masking under strong-sink / weak-feeder
+
+Propagated to: experiments/README.md, [[Experiment Registry]], [[Variant Comparison Methodology]] pending table, [[Scenario Registry]] planned-examples note, `plans/network-of-healers.md` Y-statement parked section.
+
+---
+
+## [2026-08-04] new | experiments maintenance skill + issue sync
+
+- Added `.agents/skills/experiments/SKILL.md` (file / lint / complete / sync; Pending ⇒ open issue policy)
+- Opened issues: #32 `kg-grounding-agent-behavior`, #33 `heal-on-critical-path`, #34 `collapse-masks-heterogeneity`
+- Wired Issue column across `experiments/README.md`, [[Experiment Registry]], [[Variant Comparison Methodology]] pending table
+
+---
+
+## [2026-08-05] lint | exhaustive | 18 pages checked, 1 issue found, 0 fixed
+
+Checks: frontmatter, wikilinks, orphans, index coverage, README scenarios ↔ [[Scenario Registry]], experiments disk ↔ README ↔ wiki registry ↔ Pending issue coverage.
+
+Clean:
+- All `[[wikilinks]]` resolve; no content orphans; index complete (16 catalogued pages + meta)
+- All 8 experiment slugs aligned across disk / `experiments/README.md` / [[Experiment Registry]]
+- All Pending experiments have open issues (#25–27, #32–34); Complete rows OK
+
+Unfixable (needs human judgment):
+- GitHub #24 `experiment: side-by-side kernel comparison visualisation` — open `experiment:` issue with **no** `experiments/<slug>/` hypothesis (orphan issue per experiments skill). File a hypothesis or close/retitle.
+- #21 still open though `wiki-knowledge-graph` is Complete — optional close with verdict comment.

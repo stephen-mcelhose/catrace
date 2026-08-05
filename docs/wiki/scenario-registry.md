@@ -27,7 +27,7 @@ ad-hoc claims. Lint must re-check this page whenever `README.md`,
 
 | Plan | Intended path | Notes |
 |------|---------------|-------|
-| `plans/network-of-healers.md` | `examples/network_of_healers` | Sequel to [[Example: Self-Healing Nodes]] (topology / coupling variants). **Not** README scenario 5. Premise still under critical review; no scenario number until README is deliberately updated. |
+| `plans/network-of-healers.md` | `examples/network_of_healers` | Multi-node graph + story collapse (no evolver in v1). **Not** README scenario 5. Heterogeneous follow-ups filed as `heal-on-critical-path` and `collapse-masks-heterogeneity` (see [[Experiment Registry]]). |
 
 ## Draft code without walkthrough
 

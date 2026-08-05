@@ -2,7 +2,7 @@
 title: Experiment Registry
 tags: [experiments, variant-comparison, hypothesis, results, registry]
 sources: [experiments/README.md]
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Experiment Registry
@@ -13,14 +13,19 @@ See [[Variant Comparison Methodology]] for the full filing process and hypothesi
 
 ## Registry
 
-| Slug | Claim | Status | Verdict |
-|------|-------|--------|---------|
-| `nodes-throttle-vs-evolver` | Node throttle is primary recovery mechanism; evolver contributes but is not essential | Complete | Supported (4/4 metrics) |
-| `wiki-knowledge-graph` | Trace chain corrects importance distortion caused by missing wiki pages | Complete | Not supported (1/4 criteria) |
-| `kg-grounding-agent-behavior` | Knowledge graph quality systematically shifts knowledge agent behavior — richer graph → higher π(understood), faster recovery, lower entropy | Pending | — |
-| `spectral-gap-mixing-time` | Spectral gap rank-orders kernels correctly by empirical mixing speed | Pending | — |
-| `stationary-sensitivity` | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution | Pending | — |
-| `n-agent-scalability` | Dense joint kernel approach becomes intractable at N=4+ agents; trace collapses are the solution | Pending | — |
+Every **Pending** experiment must have an open GitHub issue (`experiment: …`).
+Maintain via `.agents/skills/experiments/SKILL.md`.
+
+| Slug | Claim | Status | Verdict | Issue |
+|------|-------|--------|---------|-------|
+| `nodes-throttle-vs-evolver` | Node throttle is primary recovery mechanism; evolver contributes but is not essential | Complete | Supported (4/4 metrics) | — |
+| `wiki-knowledge-graph` | Trace chain corrects importance distortion caused by missing wiki pages | Complete | Not supported (1/4 criteria) | #21 |
+| `kg-grounding-agent-behavior` | Knowledge graph quality systematically shifts knowledge agent behavior — richer graph → higher π(understood), faster recovery, lower entropy | Pending | — | #32 |
+| `spectral-gap-mixing-time` | Spectral gap rank-orders kernels correctly by empirical mixing speed | Pending | — | #25 |
+| `stationary-sensitivity` | Perturbations to high-π rows cause disproportionately large shifts in stationary distribution | Pending | — | #26 |
+| `n-agent-scalability` | Dense joint kernel approach becomes intractable at N=4+ agents; trace collapses are the solution | Pending | — | #27 |
+| `heal-on-critical-path` | On a fixed \(1\to2\) load graph, strong local heal belongs on the downstream sink more than on the upstream feeder | Pending | — (needs `network_of_healers`) | #33 |
+| `collapse-masks-heterogeneity` | Strong-sink / weak-feeder makes collapsed pool_ok look healthier than joint upstream-overload mass warrants | Pending | — (needs `network_of_healers`) | #34 |
 
 ## Completed results
 
@@ -41,7 +46,8 @@ This does not invalidate the [[Trace Chain]] technique — the stationary consis
 3. Fill Claim, Variables, Predictions **before running**
 4. Run catrace analysis
 5. Fill Results and Verdict
-6. Add a row to `experiments/README.md`
+6. Add a row to `experiments/README.md` (with Issue `#N`)
+7. Open/sync GitHub issue — prefer `.agents/skills/experiments` **file** / **lint**
 
 ## Sources
 

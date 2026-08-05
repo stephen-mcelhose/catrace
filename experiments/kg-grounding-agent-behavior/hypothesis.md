@@ -14,6 +14,7 @@ quality of the grounding changes.
 - **Pattern:** Single LLM task agent (1), extended to include a knowledge graph as the mechanism
   shaping perception
 - **Related examples:** `examples/simple_agent`, `experiments/wiki-knowledge-graph`
+- **Issue:** [#32](https://github.com/stephen-mcelhose/catrace/issues/32)
 - **Motivation:** Knowledge graph quality is often treated as a qualitative concern — "more
   complete is better." catrace lets us make this precise: KG quality maps directly to entries
   in the Perception kernel P, and from there we get exact predictions about stationary
