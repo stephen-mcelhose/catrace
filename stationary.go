@@ -3,6 +3,8 @@ package catrace
 import (
 	"fmt"
 	"math"
+
+	"gonum.org/v1/gonum/mat"
 )
 
 // Stationary computes a stationary distribution pi such that pi P = pi.
@@ -68,6 +70,21 @@ func (k *Kernel) StationaryFrom(start []float64, tol float64, maxIter int) ([]fl
 	if math.Abs(sum-1.0) > tol {
 		return nil, fmt.Errorf("start does not sum to 1 (got %g, tol %g)", sum, tol)
 	}
+	cd, err := k.Classes(tol)
+	if err != nil {
+		return nil, fmt.Errorf("ergodicity check: %w", err)
+	}
+	if len(cd.Recurrent) != 1 {
+		return nil, fmt.Errorf("StationaryFrom requires an ergodic kernel: found %d recurrent classes", len(cd.Recurrent))
+	}
+	var period int
+	for _, p := range cd.Periods {
+		period = p
+	}
+	if period != 1 {
+		return nil, fmt.Errorf("StationaryFrom requires an aperiodic kernel: recurrent class has period %d", period)
+	}
+
 	for iter := 0; iter < maxIter; iter++ {
 		next, err := k.LeftAction(pi)
 		if err != nil {
@@ -160,6 +177,57 @@ func (k *Kernel) PersonalizedPageRank(restart []float64, alpha, tol float64, max
 		}
 	}
 	return x, fmt.Errorf("PersonalizedPageRank did not converge within %d iterations", maxIter)
+}
+
+// TeleportingKernel constructs the teleporting Markov chain
+//
+//	T = α·restart·𝟙ᵀ + (1−α)·P
+//
+// whose stationary distribution equals the PersonalizedPageRank vector for the
+// same restart and alpha. The teleporting chain is strongly connected for any
+// alpha ∈ (0, 1] and any stochastic restart, so its stationary distribution
+// exists and is unique.
+//
+// For alpha = 1 every row of T equals restart (the chain ignores P entirely).
+// For alpha = 0 T equals P unchanged.
+//
+// TeleportingKernel is useful for visualisation: call ToHTML on the returned
+// kernel and nodes will be sized by PPR score. Use MinEdge in VisualiseOptions
+// to suppress low-weight teleportation arcs.
+func (k *Kernel) TeleportingKernel(restart []float64, alpha float64) (*Kernel, error) {
+	if k == nil || k.P == nil {
+		return nil, fmt.Errorf("nil kernel")
+	}
+	n := k.NumStates()
+	if n == 0 {
+		return nil, fmt.Errorf("empty kernel")
+	}
+	if len(restart) != n {
+		return nil, fmt.Errorf("restart length %d does not match kernel size %d", len(restart), n)
+	}
+	if alpha < 0 || alpha > 1 {
+		return nil, fmt.Errorf("alpha %g is out of range [0, 1]", alpha)
+	}
+	const tol = 1e-9
+	v := make([]float64, n)
+	sum := 0.0
+	for i, val := range restart {
+		if val < 0 {
+			return nil, fmt.Errorf("restart[%d] is negative: %g", i, val)
+		}
+		v[i] = val
+		sum += val
+	}
+	if math.Abs(sum-1.0) > tol {
+		return nil, fmt.Errorf("restart does not sum to 1 (got %g)", sum)
+	}
+	data := make([]float64, n*n)
+	for i := 0; i < n; i++ {
+		for j := 0; j < n; j++ {
+			data[i*n+j] = alpha*v[j] + (1-alpha)*k.P.At(i, j)
+		}
+	}
+	return NewKernel(mat.NewDense(n, n, data), k.StateNames)
 }
 
 // EntropyRate returns the entropy rate of the chain in the specified log base.

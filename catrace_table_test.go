@@ -33,6 +33,15 @@ func mustKernel(t *testing.T, data []float64, n int) *catrace.Kernel {
 	return k
 }
 
+func mustKernelNamed(t *testing.T, data []float64, n int, names []string) *catrace.Kernel {
+	t.Helper()
+	k, err := catrace.NewKernel(mat.NewDense(n, n, data), names)
+	if err != nil {
+		t.Fatalf("mustKernelNamed: %v", err)
+	}
+	return k
+}
+
 // ergodic2x2 returns [[0.7,0.3],[0.4,0.6]]; stationary = [4/7, 3/7].
 func ergodic2x2(t *testing.T) *catrace.Kernel {
 	t.Helper()
@@ -764,15 +773,24 @@ func TestKernel_Stationary(t *testing.T) {
 }
 
 func TestKernel_EntropyRate(t *testing.T) {
-	t.Run("deterministic chain has zero entropy", func(t *testing.T) {
-		// Identity matrix: always stay; H = 0.
-		k := mustKernel(t, []float64{1, 0, 0, 1}, 2)
+	t.Run("single-state chain has zero entropy", func(t *testing.T) {
+		// 1-state chain P=[[1]]: trivially ergodic, H = -1·log₂(1) = 0.
+		k := mustKernel(t, []float64{1}, 1)
 		h, err := k.EntropyRate(2)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if math.Abs(h) > 1e-12 {
 			t.Fatalf("got %g, want 0", h)
+		}
+	})
+
+	t.Run("non-ergodic kernel returns error", func(t *testing.T) {
+		// Identity 2×2: two absorbing states — reducible, not ergodic.
+		k := mustKernel(t, []float64{1, 0, 0, 1}, 2)
+		_, err := k.EntropyRate(2)
+		if err == nil {
+			t.Fatal("expected error for non-ergodic kernel, got nil")
 		}
 	})
 
@@ -1419,6 +1437,115 @@ func TestPersonalizedPageRank(t *testing.T) {
 			}
 			if got := err.Error(); !containsString(got, tc.wantErr) {
 				t.Fatalf("error %q does not contain %q", got, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestTeleportingKernel(t *testing.T) {
+	t.Run("stationary equals PPR", func(t *testing.T) {
+		// The stationary distribution of the teleporting chain must equal
+		// the PersonalizedPageRank vector for the same restart and alpha.
+		k := ergodic2x2(t)
+		restart := []float64{0.8, 0.2}
+		alpha := 0.15
+
+		tk, err := k.TeleportingKernel(restart, alpha)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		piT, err := tk.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatalf("Stationary on teleporting kernel: %v", err)
+		}
+		ppr, err := k.PersonalizedPageRank(restart, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		nearlyEqualSlice(t, piT, ppr, 1e-8)
+	})
+
+	t.Run("alpha=0 yields original kernel", func(t *testing.T) {
+		k := ergodic2x2(t)
+		restart := []float64{0.5, 0.5}
+		tk, err := k.TeleportingKernel(restart, 0)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		n := k.NumStates()
+		for i := 0; i < n; i++ {
+			for j := 0; j < n; j++ {
+				if math.Abs(tk.P.At(i, j)-k.P.At(i, j)) > 1e-14 {
+					t.Fatalf("T[%d][%d]=%g, want %g", i, j, tk.P.At(i, j), k.P.At(i, j))
+				}
+			}
+		}
+	})
+
+	t.Run("alpha=1 every row equals restart", func(t *testing.T) {
+		k := ergodic2x2(t)
+		restart := []float64{0.3, 0.7}
+		tk, err := k.TeleportingKernel(restart, 1)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		n := k.NumStates()
+		for i := 0; i < n; i++ {
+			for j := 0; j < n; j++ {
+				if math.Abs(tk.P.At(i, j)-restart[j]) > 1e-14 {
+					t.Fatalf("T[%d][%d]=%g, want restart[%d]=%g", i, j, tk.P.At(i, j), j, restart[j])
+				}
+			}
+		}
+	})
+
+	t.Run("works on non-ergodic base kernel", func(t *testing.T) {
+		// Identity 2×2 is reducible. TeleportingKernel should still succeed
+		// for alpha > 0 and its stationary should be well-defined.
+		k := mustKernel(t, []float64{1, 0, 0, 1}, 2)
+		restart := []float64{0.5, 0.5}
+		tk, err := k.TeleportingKernel(restart, 0.15)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		if _, err := tk.Stationary(1e-12, 5000); err != nil {
+			t.Fatalf("Stationary on teleporting kernel over reducible base: %v", err)
+		}
+	})
+
+	t.Run("state names are preserved", func(t *testing.T) {
+		k := mustKernelNamed(t, []float64{0.7, 0.3, 0.4, 0.6}, 2, []string{"A", "B"})
+		tk, err := k.TeleportingKernel([]float64{0.5, 0.5}, 0.1)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		if tk.StateNames[0] != "A" || tk.StateNames[1] != "B" {
+			t.Fatalf("state names not preserved: got %v", tk.StateNames)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		k       *catrace.Kernel
+		restart []float64
+		alpha   float64
+		wantErr string
+	}{
+		{"nil kernel", nil, []float64{0.5, 0.5}, 0.1, "nil"},
+		{"wrong restart length", ergodic2x2(t), []float64{0.5, 0.3, 0.2}, 0.1, "length"},
+		{"restart does not sum to 1", ergodic2x2(t), []float64{0.3, 0.3}, 0.1, "sum"},
+		{"negative restart entry", ergodic2x2(t), []float64{-0.1, 1.1}, 0.1, "negative"},
+		{"alpha < 0", ergodic2x2(t), []float64{0.5, 0.5}, -0.1, "out of range"},
+		{"alpha > 1", ergodic2x2(t), []float64{0.5, 0.5}, 1.1, "out of range"},
+	}
+	for _, tc := range errCases {
+		t.Run("error: "+tc.name, func(t *testing.T) {
+			_, err := tc.k.TeleportingKernel(tc.restart, tc.alpha)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !containsString(err.Error(), tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", err.Error(), tc.wantErr)
 			}
 		})
 	}
