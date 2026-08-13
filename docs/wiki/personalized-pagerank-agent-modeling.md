@@ -1,13 +1,15 @@
 ---
 title: Personalized PageRank and Agent Modeling
-tags: [ppr, pagerank, agent, intent, goal-directed, stationary, pda, network, modeling]
+tags: [ppr, pagerank, agent, intent, goal-directed, stationary, pda, network, modeling, teleporting-kernel]
 sources: [docs/adr/0001-stationary-from-custom-start.md]
-updated: 2025-07-17
+updated: 2026-08-13
 ---
 
 # Personalized PageRank and Agent Modeling
 
 This page explains why `PersonalizedPageRank` is a natural model for goal-directed agent behavior in the catrace framework, how it relates to `StationaryFrom`, and what open research questions follow from the connection.
+
+> **Implementation status (2026-08-13):** `TeleportingKernel`, `PersonalizedPageRank`, and `NewTeleportingKernelFromAdj` are all implemented in the catrace API. See [[catrace API]] for signatures. The document-graph use case described in §"Knowledge-graph grounding" below is now concrete — see `tools/firehose-graph/` in `eis-intake-firehose` for a working PPR visualization of a 64-page document corpus using α=0.15 with the 03-recommend gate pages as the restart distribution.
 
 ## The core distinction
 
@@ -76,7 +78,7 @@ The following are not yet answered in catrace theory or experiments:
 
 1. **PPR on Q vs W.** Running PPR on the qualia kernel Q vs the world kernel W gives different fixed points. What is the relationship? Does PPR commute with the cyclic permutation between Q, S, W?
 
-2. **Choosing α.** In the knowledge-graph application a standard value `α ≈ 0.15` (the Google PageRank damping factor) is conventional. For agent modeling, what is the right value? Is there a principled way to infer `α` from observed agent behavior?
+2. **Choosing α.** In the knowledge-graph application `α = 0.15` (the Google PageRank damping factor) is now confirmed conventional — the `firehose-graph` tool uses it on the eis-intake-firehose document corpus and produces coherent results. For agent modeling the right value remains open: is there a principled way to infer `α` from observed agent behavior?
 
 3. **PPR and MFPT.** Is there a closed-form relationship between the PPR mass assigned to a state and the MFPT to that state from a typical starting point? Such a relationship would unify two of catrace's primary metrics.
 

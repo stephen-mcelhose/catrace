@@ -176,6 +176,13 @@ Raw sources: docs/patterns/story-prompt-chaining.md, examples/prompt_chaining/{m
 
 ---
 
+## [2026-08-13] ingest | TeleportingKernel, PersonalizedPageRank, NewTeleportingKernelFromAdj, NodeMass (PR #39)
+
+New API surface implemented in `stationary.go`, `graph.go`, `visualise.go`.
+Propagated to: catrace-api.md (new sections + comparison table), personalized-pagerank-agent-modeling.md (implementation-complete callout, α=0.15 confirmed in practice, open question 2 narrowed), catrace-glossary.md (new §Teleportation and personalization: teleporting kernel, restart distribution, sink node, PPR), AGENTS.md domain table updated.
+
+---
+
 ## [2026-08-05] lint | 17 content pages checked, 3 issues found, 2 fixed
 
 Checked: orphans/wikilinks, index coverage, Scenario Registry ↔ README, Implemented = main.go+WALKTHROUGH, catalogue ↔ registry, experiments status maintain.

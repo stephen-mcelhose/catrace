@@ -2,7 +2,7 @@
 title: catrace Glossary
 tags: [glossary, notation, definitions, terminology]
 sources: [GLOSSARY.md]
-updated: 2026-08-02
+updated: 2026-08-13
 ---
 
 # catrace Glossary
@@ -53,6 +53,16 @@ This page synthesizes the formal definitions from `GLOSSARY.md`, grouping them b
 - Pass 2: DFS on the reversed graph in reverse finish-time order; each DFS tree is one SCC.
 
 SCCs with no outgoing edges to other SCCs are **recurrent classes** (chain never leaves). SCCs with outgoing edges are **transient classes** (chain eventually leaves). After SCC identification, `Classes()` computes the **period** of each recurrent class — the GCD of all cycle lengths. Period 1 = aperiodic (convergence to stationarity). See [[Markov Chain Foundations]].
+
+## Teleportation and personalization
+
+**Teleporting kernel** — The chain `T = α·v·1ᵀ + (1−α)·P` that blends a restart distribution `v` with a base kernel `P`. At each step, with probability `α` the walk resets to `v`; with probability `1−α` it follows `P`. Ergodic for any `α > 0`, regardless of whether `P` is irreducible. Built via `TeleportingKernel(restart, α)` on an existing `*Kernel`, or directly from a raw adjacency matrix via `NewTeleportingKernelFromAdj`. See [[Personalized PageRank and Agent Modeling]] and [[catrace API]].
+
+**Restart distribution** — The probability vector `v` in the teleporting kernel. Encodes where the walk teleports to. In agent modeling `v` represents goal states; in document-graph analysis `v` is concentrated on seed pages (e.g. gate-output documents). Must be a valid probability vector (non-negative, sums to 1).
+
+**Sink node** — A node with no outgoing edges (all-zero row in the adjacency matrix). `NewRandomWalkKernel` errors on sinks because the row of P is undefined. `NewTeleportingKernelFromAdj` handles sinks natively: a sink's row in T collapses to the restart distribution `v` (no artificial uniform edges inserted). In document graphs, leaf pages with no outgoing relative links are common sinks.
+
+**Personalized PageRank (PPR)** — The stationary distribution of the teleporting kernel `T = α·v·1ᵀ + (1−α)·P`. PPR(v, α) biases stationary mass toward the support of `v`, blending structural importance (from P) with goal-relevance (from v). The unique fixed point is guaranteed for `α > 0`. Computed via `PersonalizedPageRank(restart, α, tol, maxIter)` using power iteration. See [[Personalized PageRank and Agent Modeling]].
 
 ## Time metrics
 
