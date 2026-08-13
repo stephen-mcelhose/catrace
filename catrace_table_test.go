@@ -1177,6 +1177,265 @@ func TestWindowedTraceEstimates(t *testing.T) {
 	})
 }
 
+// ── stationary.go ─────────────────────────────────────────────────────────────
+
+func TestStationaryFrom(t *testing.T) {
+	generic4x4 := mustKernel(t, []float64{
+		0.60, 0.20, 0.10, 0.10,
+		0.15, 0.55, 0.15, 0.15,
+		0.20, 0.20, 0.40, 0.20,
+		0.10, 0.20, 0.20, 0.50,
+	}, 4)
+	ergodic3x3 := mustKernel(t, []float64{
+		0.5, 0.3, 0.2,
+		0.2, 0.6, 0.2,
+		0.3, 0.2, 0.5,
+	}, 3)
+
+	t.Run("ergodic 2x2 skewed start converges to same fixed point as Stationary", func(t *testing.T) {
+		k := ergodic2x2(t)
+		want, err := k.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := k.StationaryFrom([]float64{0.9, 0.1}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		nearlyEqualSlice(t, got, want, 1e-8)
+	})
+
+	t.Run("generic 4x4 skewed start converges to same fixed point as Stationary", func(t *testing.T) {
+		want, err := generic4x4.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := generic4x4.StationaryFrom([]float64{0.7, 0.1, 0.1, 0.1}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		nearlyEqualSlice(t, got, want, 1e-8)
+	})
+
+	t.Run("delta start on 3-state ergodic chain converges to valid distribution", func(t *testing.T) {
+		got, err := ergodic3x3.StationaryFrom([]float64{1, 0, 0}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		sum := 0.0
+		for _, v := range got {
+			if v < 0 {
+				t.Fatalf("negative entry %g", v)
+			}
+			sum += v
+		}
+		if math.Abs(sum-1.0) > 1e-8 {
+			t.Fatalf("sum = %g, want 1", sum)
+		}
+	})
+
+	t.Run("maxIter=0 defaults to 1000 and converges on ergodic 2x2", func(t *testing.T) {
+		k := ergodic2x2(t)
+		_, err := k.StationaryFrom([]float64{0.5, 0.5}, 1e-12, 0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("near-zero negative entry is clamped without error", func(t *testing.T) {
+		k := ergodic2x2(t)
+		_, err := k.StationaryFrom([]float64{1.0 + 1e-14, -1e-14}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("expected clamp, got error: %v", err)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		k       *catrace.Kernel
+		start   []float64
+		wantErr string
+	}{
+		{
+			name:    "nil kernel",
+			k:       nil,
+			start:   []float64{1},
+			wantErr: "nil kernel",
+		},
+		{
+			name:    "wrong length start",
+			k:       ergodic2x2(t),
+			start:   []float64{1, 0, 0},
+			wantErr: "does not match",
+		},
+		{
+			name:    "significantly negative entry",
+			k:       ergodic2x2(t),
+			start:   []float64{1.1, -0.1},
+			wantErr: "negative",
+		},
+		{
+			name:    "sum not 1",
+			k:       ergodic2x2(t),
+			start:   []float64{0.4, 0.4},
+			wantErr: "does not sum to 1",
+		},
+	}
+	for _, tc := range errCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.k.StationaryFrom(tc.start, 1e-12, 5000)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if got := err.Error(); !containsString(got, tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", got, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestPersonalizedPageRank(t *testing.T) {
+	k2 := ergodic2x2(t) // [[0.7,0.3],[0.4,0.6]], stationary = [4/7, 3/7]
+
+	t.Run("fixed-point invariant: one more PPR step leaves result unchanged", func(t *testing.T) {
+		restart := []float64{0.5, 0.5}
+		alpha := 0.15
+		got, err := k2.PersonalizedPageRank(restart, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		// Apply one more PPR step manually and confirm delta < tol.
+		propagated, _ := k2.LeftAction(got)
+		for i := range propagated {
+			propagated[i] = alpha*restart[i] + (1-alpha)*propagated[i]
+		}
+		for i := range got {
+			if d := math.Abs(propagated[i] - got[i]); d > 1e-8 {
+				t.Fatalf("[%d] fixed-point violated: delta = %g", i, d)
+			}
+		}
+	})
+
+	t.Run("concentrated restart biases result vs uniform PPR", func(t *testing.T) {
+		alpha := 0.15
+		concentrated, err := k2.PersonalizedPageRank([]float64{1, 0}, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		uniform, err := k2.PersonalizedPageRank([]float64{0.5, 0.5}, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		// Restart concentrated on state 0 must give more mass to state 0 than uniform restart.
+		if concentrated[0] <= uniform[0] {
+			t.Fatalf("expected concentrated[0]=%g > uniform[0]=%g", concentrated[0], uniform[0])
+		}
+	})
+
+	t.Run("alpha=0 matches StationaryFrom(restart)", func(t *testing.T) {
+		restart := []float64{0.3, 0.7}
+		ppr, err := k2.PersonalizedPageRank(restart, 0, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank alpha=0: %v", err)
+		}
+		sf, err := k2.StationaryFrom(restart, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		nearlyEqualSlice(t, ppr, sf, 1e-8)
+	})
+
+	t.Run("alpha=1 returns restart in one iteration", func(t *testing.T) {
+		restart := []float64{0.2, 0.8}
+		got, err := k2.PersonalizedPageRank(restart, 1, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank alpha=1: %v", err)
+		}
+		nearlyEqualSlice(t, got, restart, 1e-12)
+	})
+
+	t.Run("maxIter=0 defaults to 1000 and converges", func(t *testing.T) {
+		_, err := k2.PersonalizedPageRank([]float64{0.5, 0.5}, 0.15, 1e-12, 0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		k       *catrace.Kernel
+		restart []float64
+		alpha   float64
+		wantErr string
+	}{
+		{
+			name:    "nil kernel",
+			k:       nil,
+			restart: []float64{1},
+			alpha:   0.15,
+			wantErr: "nil kernel",
+		},
+		{
+			name:    "wrong length restart",
+			k:       k2,
+			restart: []float64{1, 0, 0},
+			alpha:   0.15,
+			wantErr: "does not match",
+		},
+		{
+			name:    "significantly negative restart entry",
+			k:       k2,
+			restart: []float64{1.1, -0.1},
+			alpha:   0.15,
+			wantErr: "negative",
+		},
+		{
+			name:    "restart does not sum to 1",
+			k:       k2,
+			restart: []float64{0.3, 0.3},
+			alpha:   0.15,
+			wantErr: "does not sum to 1",
+		},
+		{
+			name:    "alpha below 0",
+			k:       k2,
+			restart: []float64{0.5, 0.5},
+			alpha:   -0.1,
+			wantErr: "out of range",
+		},
+		{
+			name:    "alpha above 1",
+			k:       k2,
+			restart: []float64{0.5, 0.5},
+			alpha:   1.1,
+			wantErr: "out of range",
+		},
+	}
+	for _, tc := range errCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.k.PersonalizedPageRank(tc.restart, tc.alpha, 1e-12, 5000)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if got := err.Error(); !containsString(got, tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", got, tc.wantErr)
+			}
+		})
+	}
+}
+
+func containsString(s, sub string) bool {
+	return len(s) >= len(sub) && (s == sub || len(sub) == 0 ||
+		func() bool {
+			for i := 0; i <= len(s)-len(sub); i++ {
+				if s[i:i+len(sub)] == sub {
+					return true
+				}
+			}
+			return false
+		}())
+}
+
 // ── invariants ────────────────────────────────────────────────────────────────
 
 func TestInvariant_StationaryFixedPoint(t *testing.T) {

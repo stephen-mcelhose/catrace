@@ -1,6 +1,6 @@
 ---
 title: catrace API
-tags: [api, go, library, kernel, agent, trace, stationary]
+tags: [api, go, library, kernel, agent, trace, stationary, ppr, pagerank]
 sources: [README.md]
 updated: 2026-08-05
 ---
@@ -16,7 +16,7 @@ catrace is a Go library (requires Go 1.22+, uses `gonum`) for finite-state Marko
 | `kernel.go`    | Core `Kernel` type, composition helpers, validation   |
 | `agent.go`     | `Agent` struct with P, D, A fields and derived kernels |
 | `trace.go`     | Trace chain construction and verification             |
-| `stationary.go`| Stationary distribution and entropy rate              |
+| `stationary.go`| Stationary distribution, StationaryFrom, PersonalizedPageRank, entropy rate |
 | `analysis.go`  | Communicating/recurrent class decomposition           |
 | `graph.go`     | `NewRandomWalkKernel` — build a kernel from a weighted adjacency matrix |
 | `passage.go`   | Mean first-passage times and commute times            |
@@ -51,10 +51,31 @@ See [[PDA Triplet Model]] for the mathematical relationship between Q, S, and W.
 
 ```go
 pi, err := K.Stationary(tol float64, maxIter int)
-// Power iteration until convergence within tol
+// Power iteration from a uniform start until convergence within tol
+
+pi, err := K.StationaryFrom(start []float64, tol float64, maxIter int)
+// Power iteration from an explicit probability distribution start
 ```
 
-Returns the unique stationary distribution for an ergodic kernel. See [[Markov Chain Foundations]] for theory.
+`Stationary` uses a uniform initial distribution. `StationaryFrom` accepts any valid probability vector as the starting point — useful when the initial distribution carries semantic meaning (e.g. the agent's prior state), or to verify ergodicity by confirming that different starting distributions converge to the same fixed point. On an ergodic kernel, both methods return the same result. See [[Markov Chain Foundations]] for theory.
+
+### Personalized PageRank
+
+```go
+ppr, err := K.PersonalizedPageRank(restart []float64, alpha, tol float64, maxIter int)
+// Fixed point of x = alpha·restart + (1-alpha)·x·P
+```
+
+Each iteration blends the propagated distribution back toward `restart` with weight `alpha`. The fixed point is the stationary distribution of the teleporting chain `alpha·restart·𝟙ᵀ + (1-alpha)·P`. Convergence is guaranteed for any `alpha ∈ (0, 1]` regardless of chain structure.
+
+| Parameter | Meaning |
+|---|---|
+| `restart` | Goal distribution — the states the agent is persistently drawn toward |
+| `alpha`   | Teleportation weight — strength of the pull back to `restart` (standard PageRank: 0.15) |
+| `alpha=0` | Degenerates to `StationaryFrom(restart, ...)` |
+| `alpha=1` | Returns `restart` unchanged in one step |
+
+See [[Personalized PageRank and Agent Modeling]] for the full agent-modeling interpretation.
 
 ### Entropy rate
 

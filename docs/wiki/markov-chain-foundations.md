@@ -27,7 +27,7 @@ A stationary distribution π is a probability vector satisfying π·P = π (equi
 π·P = π,   Σ_i π_i = 1,   π_i ≥ 0
 ```
 
-For an ergodic chain (single recurrent communicating class, aperiodic), the stationary distribution is unique and equals the long-run time average: the chain spends fraction π_i of all steps in state i, regardless of where it started. catrace computes π via power iteration (`Stationary`).
+For an ergodic chain (single recurrent communicating class, aperiodic), the stationary distribution is unique and equals the long-run time average: the chain spends fraction π_i of all steps in state i, regardless of where it started. catrace computes π via power iteration (`Stationary`, or `StationaryFrom` to specify the initial distribution). For a goal-directed variant that biases the fixed point toward a seed distribution, see `PersonalizedPageRank` and [[Personalized PageRank and Agent Modeling]].
 
 For a [[Trace Chain]], the restricted stationary law is obtained by normalizing the parent stationary mass on the observed subset A:
 
