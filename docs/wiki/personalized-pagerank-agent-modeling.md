@@ -9,7 +9,7 @@ updated: 2026-08-13
 
 This page explains why `PersonalizedPageRank` is a natural model for goal-directed agent behavior in the catrace framework, how it relates to `StationaryFrom`, and what open research questions follow from the connection.
 
-> **Implementation status (2026-08-13):** `TeleportingKernel`, `PersonalizedPageRank`, and `NewTeleportingKernelFromAdj` are all implemented in the catrace API. See [[catrace API]] for signatures. The document-graph use case described in §"Knowledge-graph grounding" below is now concrete — see `tools/firehose-graph/` in `eis-intake-firehose` for a working PPR visualization of a 64-page document corpus using α=0.15 with the 03-recommend gate pages as the restart distribution.
+> **Implementation status (2026-08-13):** `TeleportingKernel`, `PersonalizedPageRank`, and `NewTeleportingKernelFromAdj` are all implemented in the catrace API. See [[catrace API]] for signatures.
 
 ## The core distinction
 
