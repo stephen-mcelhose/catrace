@@ -442,6 +442,148 @@ func TestNewRandomWalkKernel(t *testing.T) {
 	}
 }
 
+func TestNewTeleportingKernelFromAdj(t *testing.T) {
+	uniform2 := []float64{0.5, 0.5}
+
+	t.Run("non-sink row blends adj and restart", func(t *testing.T) {
+		// 2-node chain: 0→1 only (row 0 has one outgoing edge).
+		// With alpha=0.5, restart=[0.5,0.5]:
+		//   T[0][0] = 0.5*0.5 + 0.5*(0/1) = 0.25
+		//   T[0][1] = 0.5*0.5 + 0.5*(1/1) = 0.75
+		adj := mat.NewDense(2, 2, []float64{0, 1, 1, 0})
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, uniform2, 0.5, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		nearlyEqualSlice(t, []float64{tk.P.At(0, 0), tk.P.At(0, 1)}, []float64{0.25, 0.75}, 1e-12)
+	})
+
+	t.Run("sink row becomes restart", func(t *testing.T) {
+		// Node 1 has no outgoing edges. Its row must equal the restart vector.
+		adj := mat.NewDense(2, 2, []float64{0, 1, 0, 0})
+		restart := []float64{0.3, 0.7}
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, 0.15, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		nearlyEqualSlice(t, []float64{tk.P.At(1, 0), tk.P.At(1, 1)}, restart, 1e-12)
+	})
+
+	t.Run("alpha=0 non-sink row equals normalised adj", func(t *testing.T) {
+		// With alpha=0 the result should equal NewRandomWalkKernel for non-sink rows.
+		adj := mat.NewDense(2, 2, []float64{0, 2, 1, 0})
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, uniform2, 0, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// row 0: weights 0,2 → P[0][1]=1
+		if math.Abs(tk.P.At(0, 1)-1.0) > 1e-12 {
+			t.Fatalf("P[0][1]=%g, want 1", tk.P.At(0, 1))
+		}
+		// row 1: weights 1,0 → P[1][0]=1
+		if math.Abs(tk.P.At(1, 0)-1.0) > 1e-12 {
+			t.Fatalf("P[1][0]=%g, want 1", tk.P.At(1, 0))
+		}
+	})
+
+	t.Run("alpha=0 sink row still becomes restart", func(t *testing.T) {
+		// Even with no teleportation, a sink must be resolved to something valid.
+		// We define it as restart so the kernel is always well-formed.
+		adj := mat.NewDense(2, 2, []float64{0, 1, 0, 0})
+		restart := []float64{0.4, 0.6}
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, 0, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		nearlyEqualSlice(t, []float64{tk.P.At(1, 0), tk.P.At(1, 1)}, restart, 1e-12)
+	})
+
+	t.Run("stationary equals PPR on no-sink graph", func(t *testing.T) {
+		// When there are no sinks, NewTeleportingKernelFromAdj should agree
+		// with TeleportingKernel composed from NewRandomWalkKernel.
+		adj := mat.NewDense(3, 3, []float64{
+			0, 1, 1,
+			1, 0, 1,
+			1, 1, 0,
+		})
+		restart := []float64{0.6, 0.3, 0.1}
+		alpha := 0.15
+
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, alpha, []string{"A", "B", "C"})
+		if err != nil {
+			t.Fatalf("NewTeleportingKernelFromAdj: %v", err)
+		}
+		piT, err := tk.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatalf("Stationary: %v", err)
+		}
+
+		// Also compute via the two-step path.
+		base, err := catrace.NewRandomWalkKernel(adj, []string{"A", "B", "C"})
+		if err != nil {
+			t.Fatalf("NewRandomWalkKernel: %v", err)
+		}
+		ppr, err := base.PersonalizedPageRank(restart, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		nearlyEqualSlice(t, piT, ppr, 1e-8)
+	})
+
+	t.Run("all-sink graph: every row equals restart", func(t *testing.T) {
+		// No edges at all — every node is a sink. Every row should be restart.
+		adj := mat.NewDense(3, 3, nil)
+		restart := []float64{0.2, 0.5, 0.3}
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, 0.15, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		for i := 0; i < 3; i++ {
+			row := []float64{tk.P.At(i, 0), tk.P.At(i, 1), tk.P.At(i, 2)}
+			nearlyEqualSlice(t, row, restart, 1e-12)
+		}
+	})
+
+	t.Run("state names preserved", func(t *testing.T) {
+		adj := mat.NewDense(2, 2, []float64{0, 1, 1, 0})
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, uniform2, 0.15, []string{"X", "Y"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if tk.StateNames[0] != "X" || tk.StateNames[1] != "Y" {
+			t.Fatalf("state names not preserved: got %v", tk.StateNames)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		adj     *mat.Dense
+		restart []float64
+		alpha   float64
+		wantErr string
+	}{
+		{"nil matrix", nil, uniform2, 0.15, "nil"},
+		{"non-square", mat.NewDense(2, 3, []float64{1, 0, 0, 0, 1, 0}), uniform2, 0.15, "square"},
+		{"restart wrong length", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), []float64{1}, 0.15, "length"},
+		{"restart does not sum to 1", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), []float64{0.3, 0.3}, 0.15, "sum"},
+		{"negative restart", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), []float64{-0.1, 1.1}, 0.15, "negative"},
+		{"alpha < 0", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), uniform2, -0.1, "out of range"},
+		{"alpha > 1", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), uniform2, 1.1, "out of range"},
+		{"negative adj entry", mat.NewDense(2, 2, []float64{0, -1, 1, 0}), uniform2, 0.15, "negative"},
+	}
+	for _, tc := range errCases {
+		t.Run("error: "+tc.name, func(t *testing.T) {
+			_, err := catrace.NewTeleportingKernelFromAdj(tc.adj, tc.restart, tc.alpha, nil)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !containsString(err.Error(), tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", err.Error(), tc.wantErr)
+			}
+		})
+	}
+}
+
 // ── agent.go ──────────────────────────────────────────────────────────────────
 
 func TestAgent_Validate(t *testing.T) {
