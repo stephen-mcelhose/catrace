@@ -1,6 +1,6 @@
 ---
 title: catrace API
-tags: [api, go, library, kernel, agent, trace, stationary]
+tags: [api, go, library, kernel, agent, trace, stationary, ppr, pagerank]
 sources: [README.md]
 updated: 2026-08-05
 ---
@@ -16,9 +16,9 @@ catrace is a Go library (requires Go 1.22+, uses `gonum`) for finite-state Marko
 | `kernel.go`    | Core `Kernel` type, composition helpers, validation   |
 | `agent.go`     | `Agent` struct with P, D, A fields and derived kernels |
 | `trace.go`     | Trace chain construction and verification             |
-| `stationary.go`| Stationary distribution and entropy rate              |
+| `stationary.go`| Stationary distribution, StationaryFrom, PersonalizedPageRank, TeleportingKernel, entropy rate |
 | `analysis.go`  | Communicating/recurrent class decomposition           |
-| `graph.go`     | `NewRandomWalkKernel` — build a kernel from a weighted adjacency matrix |
+| `graph.go`     | `NewRandomWalkKernel`, `NewTeleportingKernelFromAdj` — build kernels from adjacency matrices |
 | `passage.go`   | Mean first-passage times and commute times            |
 | `sample.go`    | Sampling, kernel estimation, windowed estimates       |
 | `visualise.go` | `ToHTML` — self-contained D3 force-directed graph of any kernel |
@@ -51,10 +51,48 @@ See [[PDA Triplet Model]] for the mathematical relationship between Q, S, and W.
 
 ```go
 pi, err := K.Stationary(tol float64, maxIter int)
-// Power iteration until convergence within tol
+// Power iteration from a uniform start until convergence within tol
+
+pi, err := K.StationaryFrom(start []float64, tol float64, maxIter int)
+// Power iteration from an explicit probability distribution start
 ```
 
-Returns the unique stationary distribution for an ergodic kernel. See [[Markov Chain Foundations]] for theory.
+`Stationary` uses a uniform initial distribution. `StationaryFrom` accepts any valid probability vector as the starting point — useful when the initial distribution carries semantic meaning (e.g. the agent's prior state), or to verify ergodicity by confirming that different starting distributions converge to the same fixed point. On an ergodic kernel, both methods return the same result. See [[Markov Chain Foundations]] for theory.
+
+### Personalized PageRank
+
+```go
+ppr, err := K.PersonalizedPageRank(restart []float64, alpha, tol float64, maxIter int)
+// Fixed point of x = alpha·restart + (1-alpha)·x·P
+```
+
+Each iteration blends the propagated distribution back toward `restart` with weight `alpha`. The fixed point is the stationary distribution of the teleporting chain `alpha·restart·𝟙ᵀ + (1-alpha)·P`. Convergence is guaranteed for any `alpha ∈ (0, 1]` regardless of chain structure.
+
+| Parameter | Meaning |
+|---|---|
+| `restart` | Goal distribution — the states the agent is persistently drawn toward |
+| `alpha`   | Teleportation weight — strength of the pull back to `restart` (standard PageRank: 0.15) |
+| `alpha=0` | Degenerates to `StationaryFrom(restart, ...)` |
+| `alpha=1` | Returns `restart` unchanged in one step |
+
+See [[Personalized PageRank and Agent Modeling]] for the full agent-modeling interpretation.
+
+### Teleporting kernel
+
+```go
+tk, err := K.TeleportingKernel(restart []float64, alpha float64)
+// Returns a new *Kernel T = alpha·restart·𝟙ᵀ + (1-alpha)·P
+```
+
+Constructs the teleporting Markov chain whose stationary distribution equals the `PersonalizedPageRank` vector for the same `restart` and `alpha`. Useful for visualisation: pass the returned kernel to `ToHTML` and nodes will be sized by PPR score. Use `MinEdge` in `VisualiseOptions` to suppress the low-weight teleportation arcs that connect every node back to the seed set.
+
+| `alpha` | Effect on T                          |
+| ------- | ------------------------------------ |
+| 0       | T equals P unchanged                 |
+| (0, 1)  | Blend of P and the restart broadcast |
+| 1       | Every row of T equals `restart`      |
+
+State names are copied from the original kernel. The returned kernel is valid for all other `Kernel` methods (`Classes`, `EntropyRate`, `CommuteTime`, etc.).
 
 ### Entropy rate
 
@@ -102,7 +140,23 @@ K, err := catrace.NewRandomWalkKernel(adj [][]float64)
 // Stationary distribution has closed form: π_i ∝ degree(i)
 ```
 
-Builds a Kernel from a weighted adjacency matrix. Used in the wiki-knowledge-graph experiment to construct a PageRank-style kernel from wikilink structure.
+Builds a Kernel from a weighted adjacency matrix. Rows are normalised to row-stochastic; errors on sink nodes (zero rows). Used in the wiki-knowledge-graph experiment to construct a PageRank-style kernel from wikilink structure.
+
+### Teleporting kernel from adjacency
+
+```go
+K, err := catrace.NewTeleportingKernelFromAdj(adj *mat.Dense, restart []float64, alpha float64, names []string)
+// T[i][j] = α·restart[j] + (1−α)·(adj[i][j]/rowsum[i])   if rowsum[i] > 0
+// T[i][j] = restart[j]                                      if rowsum[i] = 0
+```
+
+Combines row-normalisation and teleportation in a single pass. Sink nodes (zero rows) collapse entirely to the restart distribution — no artificial uniform edges inserted. This is the correct primitive for graphs with dangling nodes such as document corpora, where leaf pages have no outgoing links.
+
+| Comparison                  | `NewRandomWalkKernel` + `TeleportingKernel` | `NewTeleportingKernelFromAdj`    |
+| --------------------------- | ------------------------------------------- | -------------------------------- |
+| Handles sinks               | No — errors                                 | Yes — sinks become `restart`     |
+| Sink treatment              | Manual 1/n pre-fill required                | Semantically driven by `restart` |
+| Steps                       | 2                                           | 1                                |
 
 ### Visualisation
 

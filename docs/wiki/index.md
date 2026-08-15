@@ -7,6 +7,7 @@ updated: 2026-08-05
 
 | Page | Summary | Tags |
 |------|---------|------|
+| [[Personalized PageRank and Agent Modeling]] | PPR as goal-directed agent behavior; v as intent, α as intentionality weight; open research questions | ppr, pagerank, agent, intent, goal-directed, pda, network |
 | [[Markov Chain Foundations]] | Row-stochastic matrices, stationary distributions, communicating classes, entropy rate, MFPT | markov, mathematics, stationary, entropy-rate, mfpt |
 | [[Trace Chain]] | Block-matrix formula for reducing a large Markov chain to an observed subset; key stationary theorem | trace, markov, reduction, hidden-states |
 | [[PDA Triplet Model]] | Three coupled kernels P/D/A; derived cyclic kernels Q, S, W; catrace Agent type | pda, agent, composition, cyclic-kernels |

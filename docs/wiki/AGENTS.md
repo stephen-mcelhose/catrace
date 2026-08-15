@@ -31,7 +31,7 @@ Raw sources are the existing project documents, read in place. The LLM never edi
 | Domain                   | Topic                                                                 |
 |--------------------------|-----------------------------------------------------------------------|
 | Mathematical foundations | Markov chains, kernel algebra, spectral theory, mixing, MFPT          |
-| catrace API              | Kernel type, Trace, Stationary, MeanFirstPassage, EntropyRate, Classes |
+| catrace API              | Kernel type, Trace, Stationary, MeanFirstPassage, EntropyRate, Classes, TeleportingKernel, PersonalizedPageRank, NewTeleportingKernelFromAdj, NodeMass (VisualiseOptions) |
 | Modeling methodology     | P/D/A triplet, Q/S/W cyclic kernels, joint kernels, agent coupling    |
 | Agentic patterns         | Structural patterns, dev workflow sub-patterns                        |
 | Examples                 | Per-example synthesis pages linking math ↔ API ↔ pattern             |

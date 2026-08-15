@@ -33,6 +33,15 @@ func mustKernel(t *testing.T, data []float64, n int) *catrace.Kernel {
 	return k
 }
 
+func mustKernelNamed(t *testing.T, data []float64, n int, names []string) *catrace.Kernel {
+	t.Helper()
+	k, err := catrace.NewKernel(mat.NewDense(n, n, data), names)
+	if err != nil {
+		t.Fatalf("mustKernelNamed: %v", err)
+	}
+	return k
+}
+
 // ergodic2x2 returns [[0.7,0.3],[0.4,0.6]]; stationary = [4/7, 3/7].
 func ergodic2x2(t *testing.T) *catrace.Kernel {
 	t.Helper()
@@ -433,6 +442,148 @@ func TestNewRandomWalkKernel(t *testing.T) {
 	}
 }
 
+func TestNewTeleportingKernelFromAdj(t *testing.T) {
+	uniform2 := []float64{0.5, 0.5}
+
+	t.Run("non-sink row blends adj and restart", func(t *testing.T) {
+		// 2-node chain: 0→1 only (row 0 has one outgoing edge).
+		// With alpha=0.5, restart=[0.5,0.5]:
+		//   T[0][0] = 0.5*0.5 + 0.5*(0/1) = 0.25
+		//   T[0][1] = 0.5*0.5 + 0.5*(1/1) = 0.75
+		adj := mat.NewDense(2, 2, []float64{0, 1, 1, 0})
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, uniform2, 0.5, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		nearlyEqualSlice(t, []float64{tk.P.At(0, 0), tk.P.At(0, 1)}, []float64{0.25, 0.75}, 1e-12)
+	})
+
+	t.Run("sink row becomes restart", func(t *testing.T) {
+		// Node 1 has no outgoing edges. Its row must equal the restart vector.
+		adj := mat.NewDense(2, 2, []float64{0, 1, 0, 0})
+		restart := []float64{0.3, 0.7}
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, 0.15, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		nearlyEqualSlice(t, []float64{tk.P.At(1, 0), tk.P.At(1, 1)}, restart, 1e-12)
+	})
+
+	t.Run("alpha=0 non-sink row equals normalised adj", func(t *testing.T) {
+		// With alpha=0 the result should equal NewRandomWalkKernel for non-sink rows.
+		adj := mat.NewDense(2, 2, []float64{0, 2, 1, 0})
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, uniform2, 0, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// row 0: weights 0,2 → P[0][1]=1
+		if math.Abs(tk.P.At(0, 1)-1.0) > 1e-12 {
+			t.Fatalf("P[0][1]=%g, want 1", tk.P.At(0, 1))
+		}
+		// row 1: weights 1,0 → P[1][0]=1
+		if math.Abs(tk.P.At(1, 0)-1.0) > 1e-12 {
+			t.Fatalf("P[1][0]=%g, want 1", tk.P.At(1, 0))
+		}
+	})
+
+	t.Run("alpha=0 sink row still becomes restart", func(t *testing.T) {
+		// Even with no teleportation, a sink must be resolved to something valid.
+		// We define it as restart so the kernel is always well-formed.
+		adj := mat.NewDense(2, 2, []float64{0, 1, 0, 0})
+		restart := []float64{0.4, 0.6}
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, 0, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		nearlyEqualSlice(t, []float64{tk.P.At(1, 0), tk.P.At(1, 1)}, restart, 1e-12)
+	})
+
+	t.Run("stationary equals PPR on no-sink graph", func(t *testing.T) {
+		// When there are no sinks, NewTeleportingKernelFromAdj should agree
+		// with TeleportingKernel composed from NewRandomWalkKernel.
+		adj := mat.NewDense(3, 3, []float64{
+			0, 1, 1,
+			1, 0, 1,
+			1, 1, 0,
+		})
+		restart := []float64{0.6, 0.3, 0.1}
+		alpha := 0.15
+
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, alpha, []string{"A", "B", "C"})
+		if err != nil {
+			t.Fatalf("NewTeleportingKernelFromAdj: %v", err)
+		}
+		piT, err := tk.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatalf("Stationary: %v", err)
+		}
+
+		// Also compute via the two-step path.
+		base, err := catrace.NewRandomWalkKernel(adj, []string{"A", "B", "C"})
+		if err != nil {
+			t.Fatalf("NewRandomWalkKernel: %v", err)
+		}
+		ppr, err := base.PersonalizedPageRank(restart, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		nearlyEqualSlice(t, piT, ppr, 1e-8)
+	})
+
+	t.Run("all-sink graph: every row equals restart", func(t *testing.T) {
+		// No edges at all — every node is a sink. Every row should be restart.
+		adj := mat.NewDense(3, 3, nil)
+		restart := []float64{0.2, 0.5, 0.3}
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, restart, 0.15, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		for i := 0; i < 3; i++ {
+			row := []float64{tk.P.At(i, 0), tk.P.At(i, 1), tk.P.At(i, 2)}
+			nearlyEqualSlice(t, row, restart, 1e-12)
+		}
+	})
+
+	t.Run("state names preserved", func(t *testing.T) {
+		adj := mat.NewDense(2, 2, []float64{0, 1, 1, 0})
+		tk, err := catrace.NewTeleportingKernelFromAdj(adj, uniform2, 0.15, []string{"X", "Y"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if tk.StateNames[0] != "X" || tk.StateNames[1] != "Y" {
+			t.Fatalf("state names not preserved: got %v", tk.StateNames)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		adj     *mat.Dense
+		restart []float64
+		alpha   float64
+		wantErr string
+	}{
+		{"nil matrix", nil, uniform2, 0.15, "nil"},
+		{"non-square", mat.NewDense(2, 3, []float64{1, 0, 0, 0, 1, 0}), uniform2, 0.15, "square"},
+		{"restart wrong length", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), []float64{1}, 0.15, "length"},
+		{"restart does not sum to 1", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), []float64{0.3, 0.3}, 0.15, "sum"},
+		{"negative restart", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), []float64{-0.1, 1.1}, 0.15, "negative"},
+		{"alpha < 0", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), uniform2, -0.1, "out of range"},
+		{"alpha > 1", mat.NewDense(2, 2, []float64{0, 1, 1, 0}), uniform2, 1.1, "out of range"},
+		{"negative adj entry", mat.NewDense(2, 2, []float64{0, -1, 1, 0}), uniform2, 0.15, "negative"},
+	}
+	for _, tc := range errCases {
+		t.Run("error: "+tc.name, func(t *testing.T) {
+			_, err := catrace.NewTeleportingKernelFromAdj(tc.adj, tc.restart, tc.alpha, nil)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !containsString(err.Error(), tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", err.Error(), tc.wantErr)
+			}
+		})
+	}
+}
+
 // ── agent.go ──────────────────────────────────────────────────────────────────
 
 func TestAgent_Validate(t *testing.T) {
@@ -764,15 +915,24 @@ func TestKernel_Stationary(t *testing.T) {
 }
 
 func TestKernel_EntropyRate(t *testing.T) {
-	t.Run("deterministic chain has zero entropy", func(t *testing.T) {
-		// Identity matrix: always stay; H = 0.
-		k := mustKernel(t, []float64{1, 0, 0, 1}, 2)
+	t.Run("single-state chain has zero entropy", func(t *testing.T) {
+		// 1-state chain P=[[1]]: trivially ergodic, H = -1·log₂(1) = 0.
+		k := mustKernel(t, []float64{1}, 1)
 		h, err := k.EntropyRate(2)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if math.Abs(h) > 1e-12 {
 			t.Fatalf("got %g, want 0", h)
+		}
+	})
+
+	t.Run("non-ergodic kernel returns error", func(t *testing.T) {
+		// Identity 2×2: two absorbing states — reducible, not ergodic.
+		k := mustKernel(t, []float64{1, 0, 0, 1}, 2)
+		_, err := k.EntropyRate(2)
+		if err == nil {
+			t.Fatal("expected error for non-ergodic kernel, got nil")
 		}
 	})
 
@@ -1175,6 +1335,374 @@ func TestWindowedTraceEstimates(t *testing.T) {
 			t.Fatalf("got %d windows, want 0", len(windows))
 		}
 	})
+}
+
+// ── stationary.go ─────────────────────────────────────────────────────────────
+
+func TestStationaryFrom(t *testing.T) {
+	generic4x4 := mustKernel(t, []float64{
+		0.60, 0.20, 0.10, 0.10,
+		0.15, 0.55, 0.15, 0.15,
+		0.20, 0.20, 0.40, 0.20,
+		0.10, 0.20, 0.20, 0.50,
+	}, 4)
+	ergodic3x3 := mustKernel(t, []float64{
+		0.5, 0.3, 0.2,
+		0.2, 0.6, 0.2,
+		0.3, 0.2, 0.5,
+	}, 3)
+
+	t.Run("ergodic 2x2 skewed start converges to same fixed point as Stationary", func(t *testing.T) {
+		k := ergodic2x2(t)
+		want, err := k.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := k.StationaryFrom([]float64{0.9, 0.1}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		nearlyEqualSlice(t, got, want, 1e-8)
+	})
+
+	t.Run("generic 4x4 skewed start converges to same fixed point as Stationary", func(t *testing.T) {
+		want, err := generic4x4.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := generic4x4.StationaryFrom([]float64{0.7, 0.1, 0.1, 0.1}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		nearlyEqualSlice(t, got, want, 1e-8)
+	})
+
+	t.Run("delta start on 3-state ergodic chain converges to valid distribution", func(t *testing.T) {
+		got, err := ergodic3x3.StationaryFrom([]float64{1, 0, 0}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		sum := 0.0
+		for _, v := range got {
+			if v < 0 {
+				t.Fatalf("negative entry %g", v)
+			}
+			sum += v
+		}
+		if math.Abs(sum-1.0) > 1e-8 {
+			t.Fatalf("sum = %g, want 1", sum)
+		}
+	})
+
+	t.Run("maxIter=0 defaults to 1000 and converges on ergodic 2x2", func(t *testing.T) {
+		k := ergodic2x2(t)
+		_, err := k.StationaryFrom([]float64{0.5, 0.5}, 1e-12, 0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("near-zero negative entry is clamped without error", func(t *testing.T) {
+		k := ergodic2x2(t)
+		_, err := k.StationaryFrom([]float64{1.0 + 1e-14, -1e-14}, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("expected clamp, got error: %v", err)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		k       *catrace.Kernel
+		start   []float64
+		wantErr string
+	}{
+		{
+			name:    "nil kernel",
+			k:       nil,
+			start:   []float64{1},
+			wantErr: "nil kernel",
+		},
+		{
+			name:    "wrong length start",
+			k:       ergodic2x2(t),
+			start:   []float64{1, 0, 0},
+			wantErr: "does not match",
+		},
+		{
+			name:    "significantly negative entry",
+			k:       ergodic2x2(t),
+			start:   []float64{1.1, -0.1},
+			wantErr: "negative",
+		},
+		{
+			name:    "sum not 1",
+			k:       ergodic2x2(t),
+			start:   []float64{0.4, 0.4},
+			wantErr: "does not sum to 1",
+		},
+	}
+	for _, tc := range errCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.k.StationaryFrom(tc.start, 1e-12, 5000)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if got := err.Error(); !containsString(got, tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", got, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestPersonalizedPageRank(t *testing.T) {
+	k2 := ergodic2x2(t) // [[0.7,0.3],[0.4,0.6]], stationary = [4/7, 3/7]
+
+	t.Run("fixed-point invariant: one more PPR step leaves result unchanged", func(t *testing.T) {
+		restart := []float64{0.5, 0.5}
+		alpha := 0.15
+		got, err := k2.PersonalizedPageRank(restart, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		// Apply one more PPR step manually and confirm delta < tol.
+		propagated, _ := k2.LeftAction(got)
+		for i := range propagated {
+			propagated[i] = alpha*restart[i] + (1-alpha)*propagated[i]
+		}
+		for i := range got {
+			if d := math.Abs(propagated[i] - got[i]); d > 1e-8 {
+				t.Fatalf("[%d] fixed-point violated: delta = %g", i, d)
+			}
+		}
+	})
+
+	t.Run("concentrated restart biases result vs uniform PPR", func(t *testing.T) {
+		alpha := 0.15
+		concentrated, err := k2.PersonalizedPageRank([]float64{1, 0}, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		uniform, err := k2.PersonalizedPageRank([]float64{0.5, 0.5}, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		// Restart concentrated on state 0 must give more mass to state 0 than uniform restart.
+		if concentrated[0] <= uniform[0] {
+			t.Fatalf("expected concentrated[0]=%g > uniform[0]=%g", concentrated[0], uniform[0])
+		}
+	})
+
+	t.Run("alpha=0 matches StationaryFrom(restart)", func(t *testing.T) {
+		restart := []float64{0.3, 0.7}
+		ppr, err := k2.PersonalizedPageRank(restart, 0, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank alpha=0: %v", err)
+		}
+		sf, err := k2.StationaryFrom(restart, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("StationaryFrom: %v", err)
+		}
+		nearlyEqualSlice(t, ppr, sf, 1e-8)
+	})
+
+	t.Run("alpha=1 returns restart in one iteration", func(t *testing.T) {
+		restart := []float64{0.2, 0.8}
+		got, err := k2.PersonalizedPageRank(restart, 1, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank alpha=1: %v", err)
+		}
+		nearlyEqualSlice(t, got, restart, 1e-12)
+	})
+
+	t.Run("maxIter=0 defaults to 1000 and converges", func(t *testing.T) {
+		_, err := k2.PersonalizedPageRank([]float64{0.5, 0.5}, 0.15, 1e-12, 0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		k       *catrace.Kernel
+		restart []float64
+		alpha   float64
+		wantErr string
+	}{
+		{
+			name:    "nil kernel",
+			k:       nil,
+			restart: []float64{1},
+			alpha:   0.15,
+			wantErr: "nil kernel",
+		},
+		{
+			name:    "wrong length restart",
+			k:       k2,
+			restart: []float64{1, 0, 0},
+			alpha:   0.15,
+			wantErr: "does not match",
+		},
+		{
+			name:    "significantly negative restart entry",
+			k:       k2,
+			restart: []float64{1.1, -0.1},
+			alpha:   0.15,
+			wantErr: "negative",
+		},
+		{
+			name:    "restart does not sum to 1",
+			k:       k2,
+			restart: []float64{0.3, 0.3},
+			alpha:   0.15,
+			wantErr: "does not sum to 1",
+		},
+		{
+			name:    "alpha below 0",
+			k:       k2,
+			restart: []float64{0.5, 0.5},
+			alpha:   -0.1,
+			wantErr: "out of range",
+		},
+		{
+			name:    "alpha above 1",
+			k:       k2,
+			restart: []float64{0.5, 0.5},
+			alpha:   1.1,
+			wantErr: "out of range",
+		},
+	}
+	for _, tc := range errCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.k.PersonalizedPageRank(tc.restart, tc.alpha, 1e-12, 5000)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if got := err.Error(); !containsString(got, tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", got, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestTeleportingKernel(t *testing.T) {
+	t.Run("stationary equals PPR", func(t *testing.T) {
+		// The stationary distribution of the teleporting chain must equal
+		// the PersonalizedPageRank vector for the same restart and alpha.
+		k := ergodic2x2(t)
+		restart := []float64{0.8, 0.2}
+		alpha := 0.15
+
+		tk, err := k.TeleportingKernel(restart, alpha)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		piT, err := tk.Stationary(1e-12, 5000)
+		if err != nil {
+			t.Fatalf("Stationary on teleporting kernel: %v", err)
+		}
+		ppr, err := k.PersonalizedPageRank(restart, alpha, 1e-12, 5000)
+		if err != nil {
+			t.Fatalf("PersonalizedPageRank: %v", err)
+		}
+		nearlyEqualSlice(t, piT, ppr, 1e-8)
+	})
+
+	t.Run("alpha=0 yields original kernel", func(t *testing.T) {
+		k := ergodic2x2(t)
+		restart := []float64{0.5, 0.5}
+		tk, err := k.TeleportingKernel(restart, 0)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		n := k.NumStates()
+		for i := 0; i < n; i++ {
+			for j := 0; j < n; j++ {
+				if math.Abs(tk.P.At(i, j)-k.P.At(i, j)) > 1e-14 {
+					t.Fatalf("T[%d][%d]=%g, want %g", i, j, tk.P.At(i, j), k.P.At(i, j))
+				}
+			}
+		}
+	})
+
+	t.Run("alpha=1 every row equals restart", func(t *testing.T) {
+		k := ergodic2x2(t)
+		restart := []float64{0.3, 0.7}
+		tk, err := k.TeleportingKernel(restart, 1)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		n := k.NumStates()
+		for i := 0; i < n; i++ {
+			for j := 0; j < n; j++ {
+				if math.Abs(tk.P.At(i, j)-restart[j]) > 1e-14 {
+					t.Fatalf("T[%d][%d]=%g, want restart[%d]=%g", i, j, tk.P.At(i, j), j, restart[j])
+				}
+			}
+		}
+	})
+
+	t.Run("works on non-ergodic base kernel", func(t *testing.T) {
+		// Identity 2×2 is reducible. TeleportingKernel should still succeed
+		// for alpha > 0 and its stationary should be well-defined.
+		k := mustKernel(t, []float64{1, 0, 0, 1}, 2)
+		restart := []float64{0.5, 0.5}
+		tk, err := k.TeleportingKernel(restart, 0.15)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		if _, err := tk.Stationary(1e-12, 5000); err != nil {
+			t.Fatalf("Stationary on teleporting kernel over reducible base: %v", err)
+		}
+	})
+
+	t.Run("state names are preserved", func(t *testing.T) {
+		k := mustKernelNamed(t, []float64{0.7, 0.3, 0.4, 0.6}, 2, []string{"A", "B"})
+		tk, err := k.TeleportingKernel([]float64{0.5, 0.5}, 0.1)
+		if err != nil {
+			t.Fatalf("TeleportingKernel: %v", err)
+		}
+		if tk.StateNames[0] != "A" || tk.StateNames[1] != "B" {
+			t.Fatalf("state names not preserved: got %v", tk.StateNames)
+		}
+	})
+
+	errCases := []struct {
+		name    string
+		k       *catrace.Kernel
+		restart []float64
+		alpha   float64
+		wantErr string
+	}{
+		{"nil kernel", nil, []float64{0.5, 0.5}, 0.1, "nil"},
+		{"wrong restart length", ergodic2x2(t), []float64{0.5, 0.3, 0.2}, 0.1, "length"},
+		{"restart does not sum to 1", ergodic2x2(t), []float64{0.3, 0.3}, 0.1, "sum"},
+		{"negative restart entry", ergodic2x2(t), []float64{-0.1, 1.1}, 0.1, "negative"},
+		{"alpha < 0", ergodic2x2(t), []float64{0.5, 0.5}, -0.1, "out of range"},
+		{"alpha > 1", ergodic2x2(t), []float64{0.5, 0.5}, 1.1, "out of range"},
+	}
+	for _, tc := range errCases {
+		t.Run("error: "+tc.name, func(t *testing.T) {
+			_, err := tc.k.TeleportingKernel(tc.restart, tc.alpha)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !containsString(err.Error(), tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", err.Error(), tc.wantErr)
+			}
+		})
+	}
+}
+
+func containsString(s, sub string) bool {
+	return len(s) >= len(sub) && (s == sub || len(sub) == 0 ||
+		func() bool {
+			for i := 0; i <= len(s)-len(sub); i++ {
+				if s[i:i+len(sub)] == sub {
+					return true
+				}
+			}
+			return false
+		}())
 }
 
 // ── invariants ────────────────────────────────────────────────────────────────

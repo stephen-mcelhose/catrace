@@ -65,6 +65,58 @@ func TestTraceMatchesRestrictionTheoremPattern(t *testing.T) {
 //	π = [3/8, 2/8, 2/8, 1/8] = [0.375, 0.250, 0.250, 0.125]
 //
 // A is visited most often. D is visited least — it is a structural dead end.
+// ExampleKernel_StationaryFrom shows that a skewed starting distribution
+// converges to the same stationary distribution as the uniform start.
+//
+// The same 4-node graph as ExampleNewRandomWalkKernel (A–B–C–D) is used.
+// Starting from [0.7, 0.1, 0.1, 0.1] (mass concentrated on A) converges
+// to the degree-proportional stationary distribution π = [3/8, 2/8, 2/8, 1/8].
+func ExampleKernel_StationaryFrom() {
+	adj := mat.NewDense(4, 4, []float64{
+		0, 1, 1, 1, // A connects to B, C, D
+		1, 0, 1, 0, // B connects to A, C
+		1, 1, 0, 0, // C connects to A, B
+		1, 0, 0, 0, // D connects to A only
+	})
+	k, _ := catrace.NewRandomWalkKernel(adj, []string{"A", "B", "C", "D"})
+
+	// Skewed start: most mass on A.
+	pi, _ := k.StationaryFrom([]float64{0.7, 0.1, 0.1, 0.1}, 1e-12, 5000)
+	fmt.Printf("π(A) = %.3f\n", pi[0])
+	fmt.Printf("π(B) = %.3f\n", pi[1])
+	fmt.Printf("π(C) = %.3f\n", pi[2])
+	fmt.Printf("π(D) = %.3f\n", pi[3])
+	// Output:
+	// π(A) = 0.375
+	// π(B) = 0.250
+	// π(C) = 0.250
+	// π(D) = 0.125
+}
+
+// ExampleKernel_PersonalizedPageRank shows how seeding on a leaf node
+// concentrates PPR mass near that node compared to the global stationary.
+//
+// The same 4-node graph (A–B–C–D) is used. D is a structural dead-end
+// (degree 1). Seeding entirely on D with alpha=0.15 biases the PPR vector
+// toward D and its immediate neighbour A, compared with the global π which
+// assigns D the least mass.
+func ExampleKernel_PersonalizedPageRank() {
+	adj := mat.NewDense(4, 4, []float64{
+		0, 1, 1, 1, // A connects to B, C, D
+		1, 0, 1, 0, // B connects to A, C
+		1, 1, 0, 0, // C connects to A, B
+		1, 0, 0, 0, // D connects to A only
+	})
+	k, _ := catrace.NewRandomWalkKernel(adj, []string{"A", "B", "C", "D"})
+
+	// Seed entirely on D (the leaf). alpha=0.15 is the standard PageRank damping.
+	ppr, _ := k.PersonalizedPageRank([]float64{0, 0, 0, 1}, 0.15, 1e-12, 5000)
+	fmt.Printf("ppr(A) = %.3f\n", ppr[0])
+	fmt.Printf("ppr(B) = %.3f\n", ppr[1])
+	fmt.Printf("ppr(C) = %.3f\n", ppr[2])
+	fmt.Printf("ppr(D) = %.3f\n", ppr[3])
+}
+
 func ExampleNewRandomWalkKernel() {
 	// Symmetric adjacency matrix (1 = edge present, 0 = no edge).
 	adj := mat.NewDense(4, 4, []float64{

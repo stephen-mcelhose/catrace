@@ -26,6 +26,13 @@ type VisualiseOptions struct {
 	// are rendered at equal size.
 	StationaryTol     float64
 	StationaryMaxIter int
+
+	// NodeMass, if non-nil, is used directly as the node-size distribution
+	// instead of computing the stationary distribution of this kernel.
+	// Must have length equal to the number of states. Use this to visualise
+	// a base link graph (no teleportation edges) with nodes sized by a
+	// pre-computed PPR vector from a separate teleporting kernel.
+	NodeMass []float64
 }
 
 func (o *VisualiseOptions) withDefaults() VisualiseOptions {
@@ -57,6 +64,9 @@ func (o *VisualiseOptions) withDefaults() VisualiseOptions {
 	}
 	if o.StationaryMaxIter > 0 {
 		out.StationaryMaxIter = o.StationaryMaxIter
+	}
+	if len(o.NodeMass) > 0 {
+		out.NodeMass = o.NodeMass
 	}
 	return out
 }
@@ -102,9 +112,12 @@ func (k *Kernel) ToHTML(opts *VisualiseOptions) ([]byte, error) {
 	o := opts.withDefaults()
 	n := k.NumStates()
 
-	// --- stationary distribution ---
+	// --- node mass (for sizing) ---
+	// If NodeMass is supplied, use it directly; otherwise compute stationary.
 	pi := make([]float64, n)
-	if stat, err := k.Stationary(o.StationaryTol, o.StationaryMaxIter); err == nil {
+	if len(o.NodeMass) == n {
+		copy(pi, o.NodeMass)
+	} else if stat, err := k.Stationary(o.StationaryTol, o.StationaryMaxIter); err == nil {
 		copy(pi, stat)
 	} else {
 		// fallback: uniform

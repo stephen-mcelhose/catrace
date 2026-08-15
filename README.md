@@ -1,6 +1,6 @@
 # catrace
 
-`catrace` is a Go library for finite-state Markov models of autonomous-agent networks, implemented with `gonum`.
+`catrace` is a Go library for mathematical analysis and modeling of autonomous agents and agent networks. It treats the perceive→decide→act loop as the object of study — something to measure and reason about, not to execute — modeling it as a finite-state Markov system with `gonum`.
 
 This project intentionally extracts only the stochastic / Markov machinery from the source paper and excludes consciousness and philosophical claims.
 
@@ -49,17 +49,19 @@ Implemented concepts:
 
 ## Core model
 
-An agent is described by three row-stochastic kernels:
+Defining the agent takes one file (`agent.go`): three row-stochastic kernels forming a closed loop.
 
 - perception $P: W \to X$
 - decision $D: X \to G$
 - action $A: G \to W$
 
-The main derived kernels are:
+The rest of the library is analysis machinery for asking *given this loop, what are its invariant properties?* — stationary distribution, entropy rate, how the loop compresses or obscures world states through the trace, and so on.
 
-- qualia kernel $Q = DAP$ on experiences
-- strategy kernel $S = APD$ on actions
-- world kernel $W = PDA$ on world states
+The three composed kernels are cyclic permutations of the same product, giving three lenses on the same loop:
+
+- qualia kernel $Q = DAP$ — dynamics on experience space
+- strategy kernel $S = APD$ — dynamics on action space
+- world kernel $W = PDA$ — dynamics on world space
 
 ## Trace chain
 

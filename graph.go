@@ -2,6 +2,7 @@ package catrace
 
 import (
 	"fmt"
+	"math"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -60,4 +61,74 @@ func NewRandomWalkKernel(adj *mat.Dense, names []string) (*Kernel, error) {
 	}
 
 	return NewKernel(p, names)
+}
+
+// NewTeleportingKernelFromAdj constructs a teleporting Markov kernel directly
+// from a raw weighted adjacency matrix, combining row-normalisation and
+// teleportation in a single step:
+//
+//	T[i][j] = α·v[j] + (1−α)·(adj[i][j] / rowsum[i])   if rowsum[i] > 0
+//	T[i][j] = v[j]                                        if rowsum[i] = 0
+//
+// Sink nodes (rows that sum to zero — pages with no outgoing links) collapse
+// entirely to the restart distribution v. No artificial uniform edges are
+// inserted; the teleportation term carries them instead. This is semantically
+// cleaner than pre-filling sink rows with 1/n before calling
+// NewRandomWalkKernel.
+//
+// The returned kernel is the same object as TeleportingKernel would produce on
+// a pre-normalised input, but avoids the two-step NewRandomWalkKernel →
+// TeleportingKernel pipeline that errors on sink nodes.
+//
+// alpha must be in [0, 1]. restart must be a valid probability vector (non-
+// negative, sums to 1 within 1e-9). adj must be square with non-negative
+// entries.
+func NewTeleportingKernelFromAdj(adj *mat.Dense, restart []float64, alpha float64, names []string) (*Kernel, error) {
+	if adj == nil {
+		return nil, fmt.Errorf("nil adjacency matrix")
+	}
+	r, c := adj.Dims()
+	if r != c {
+		return nil, fmt.Errorf("adjacency matrix must be square, got %dx%d", r, c)
+	}
+	n := r
+	if len(restart) != n {
+		return nil, fmt.Errorf("restart length %d does not match matrix size %d", len(restart), n)
+	}
+	if alpha < 0 || alpha > 1 {
+		return nil, fmt.Errorf("alpha %g is out of range [0, 1]", alpha)
+	}
+	const tol = 1e-9
+	v := make([]float64, n)
+	sum := 0.0
+	for i, val := range restart {
+		if val < 0 {
+			return nil, fmt.Errorf("restart[%d] is negative: %g", i, val)
+		}
+		v[i] = val
+		sum += val
+	}
+	if math.Abs(sum-1.0) > tol {
+		return nil, fmt.Errorf("restart does not sum to 1 (got %g)", sum)
+	}
+	data := make([]float64, n*n)
+	for i := 0; i < n; i++ {
+		rowSum := 0.0
+		for j := 0; j < n; j++ {
+			val := adj.At(i, j)
+			if val < 0 {
+				return nil, fmt.Errorf("adjacency matrix has negative entry at (%d,%d): %g", i, j, val)
+			}
+			rowSum += val
+		}
+		for j := 0; j < n; j++ {
+			if rowSum > 0 {
+				data[i*n+j] = alpha*v[j] + (1-alpha)*adj.At(i, j)/rowSum
+			} else {
+				// Sink: no outgoing links — collapse entirely to restart.
+				data[i*n+j] = v[j]
+			}
+		}
+	}
+	return NewKernel(mat.NewDense(n, n, data), names)
 }
