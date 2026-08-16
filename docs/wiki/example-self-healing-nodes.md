@@ -38,7 +38,7 @@ A network node monitors its own error rate (EMA) and throttles when errors climb
 
 **Perception coupling (P_joint):** A sick node depresses the pool score the evolver observes, making a good config look bad even when it isn't. This creates `D·G → D·B` leakage: the evolver mutates away from an actually-good config because the node's degradation masks it.
 
-**Action coupling (A_joint, Variant B only):** When the evolver mutates while the node throttles, the node's `healthy` recovery probability is boosted before renormalization (+0.25 boost). In Variant A the throttle's own `healthy` entry (0.65) is already strong; the mutation adds little.
+**Action coupling (A_joint):** When the evolver mutates, the node's `healthy` recovery probability is boosted before renormalization in **both** variants — Variant A only +0.02 (negligible beside throttle's own 0.65); Variant B +0.25 on throttle (the evolver does real work).
 
 **Independent decisions:** D_joint = D_node ⊗ D_evolver.
 

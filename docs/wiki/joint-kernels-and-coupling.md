@@ -1,8 +1,8 @@
 ---
 title: Joint Kernels and Coupling
 tags: [joint-kernel, product-space, kronecker, coupling, multi-agent, perception, action]
-sources: [GLOSSARY.md]
-updated: 2026-08-02
+sources: [GLOSSARY.md, docs/wiki/raw/agent-patterns-catalog-blackboard.md]
+updated: 2026-08-05
 ---
 
 # Joint Kernels and Coupling
@@ -51,6 +51,8 @@ When the Worker is degraded (w₁ = invalid), P₂_coupled raises the Validator'
 
 In `self_healing_nodes`, the evolver's perception is coupled to node health: a sick node depresses the pool score the evolver observes, making a good config look bad even when it isn't (the `D·G → D·B` leakage).
 
+The Implemented Blackboard pattern ([[Structural Patterns]] §10; [[Example: Blackboard]]; [[Agent Patterns Catalog — Blackboard]]) is the same shape: specialists couple perception to a shared board world state while keeping D_joint a Kronecker product — board-mediated coordination without within-cycle peer messaging.
+
 ## Coupled action effect
 
 Coupling enters A_joint when one agent's action changes another agent's world state. In `validator_repair`, the Validator's repair action restores the Worker's world state — raising Worker's probability of becoming valid by ~0.20 above what it would achieve independently:
@@ -69,7 +71,7 @@ In `self_healing_nodes` (Variant B), the evolver's `mutate` action boosts the no
 
 A joint kernel can be built two ways:
 
-1. **From joint P, D, A** (preferred): Define P_joint, D_joint, A_joint over product spaces and compose J = P·D·A. Coupling enters through specific kernels with physical meaning. Used in `validator_repair` and `self_healing_nodes`.
+1. **From joint P, D, A** (preferred): Define P_joint, D_joint, A_joint over product spaces and compose J = P·D·A. Coupling enters through specific kernels with physical meaning. Used in `validator_repair`, `self_healing_nodes`, and `blackboard` (board-coupled P and count-based A; J assembled row-wise because next board depends on current status).
 
 2. **Directly**: Specify the 4×4 (or larger) matrix by hand. Simpler but loses the P, D, A decomposition. Used in `trace_analysis`.
 
@@ -85,8 +87,9 @@ Once J is built, the same tools apply as for single-agent kernels:
 - `Trace` — reduce to observable subset (e.g., {VV, II} or {H·G, O·B})
 - `MeanFirstPassage` — recovery speed from degraded states
 
-See [[Example: Validator Repair]] and [[Example: Self-Healing Nodes]] for worked analyses.
+See [[Example: Validator Repair]], [[Example: Self-Healing Nodes]], and [[Example: Blackboard]] for worked analyses.
 
 ## Sources
 
 - `GLOSSARY.md`
+- `docs/wiki/raw/agent-patterns-catalog-blackboard.md` (Blackboard as Implemented coupled-perception shape; see [[Agent Patterns Catalog — Blackboard]], [[Example: Blackboard]])

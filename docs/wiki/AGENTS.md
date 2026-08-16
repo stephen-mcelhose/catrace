@@ -22,9 +22,10 @@ Raw sources are the existing project documents, read in place. The LLM never edi
 | `docs/markovmixing.txt`                      | Academic paper on Markov mixing times        |
 | `docs/patterns/agentic-patterns-reference.md`| Full pattern reference table                 |
 | `docs/patterns/story-*.md`                   | Individual pattern stories (17 files)        |
-| `examples/*/WALKTHROUGH.md`                  | Example walkthroughs (5 files)               |
+| `examples/*/WALKTHROUGH.md`                  | Example walkthroughs (6 files)               |
 | `plans/*.md`                                 | Implementation plans (lint cross-check only) |
-| `docs/wiki/raw/`                             | Future external sources (papers, URLs)       |
+| `docs/wiki/raw/`                             | External sources (papers, URLs)              |
+| `docs/wiki/raw/agent-patterns-catalog-blackboard.md` | Agent Patterns Catalog — Blackboard pattern page |
 
 ## Wiki page domains
 

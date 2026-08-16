@@ -199,3 +199,51 @@ Fixed:
 
 Unfixable / needs human:
 - Active `wiki-knowledge-graph` still models “14 existing + 14 planned”; [[Example: Prompt Chaining]] landing on main invalidates Graph A baseline — noted on [[Experiment Registry]]; re-baseline before final Verdict
+
+## [2026-08-05] ingest | Agent Patterns Catalog — Blackboard
+
+- Raw: `docs/wiki/raw/agent-patterns-catalog-blackboard.md` (https://www.agentpatternscatalog.org/patterns/blackboard/)
+- Wiki page: [[Agent Patterns Catalog — Blackboard]] (`agent-patterns-catalog-blackboard.md`)
+- Propagated: [[Structural Patterns]] §8/§9/§10, [[Agentic Patterns Catalogue]] row 10 + APC sources note, [[Joint Kernels and Coupling]] coupled-perception note, [[Wiki Index]], `AGENTS.md` raw table
+- Status unchanged: Blackboard remains 🔲 Planned (issue #11); no `examples/blackboard/`
+
+## [2026-08-05] ingest | example blackboard (#11)
+
+- Story revised (catalog-aligned opportunistic accretion); issue #11 AC updated
+- Code: `examples/blackboard/{main.go,WALKTHROUGH.md}` — MFPT undiagnosed→confirmed ≈ 10.41; Trace IsTraceOf true
+- README scenario 7; pattern reference `blackboard`; [[Scenario Registry]] Implemented; [[Example: Blackboard]]; [[Structural Patterns]] §10; catalogue row 10 ✅
+
+## [2026-08-05] lint | 22 wiki pages checked (excl. raw/), 4 issues found, 4 fixed
+
+Checked: orphans/wikilinks, index coverage, frontmatter, Scenario Registry ↔ README 1–7, Implemented = main.go+WALKTHROUGH, catalogue/structural/APC/joint-kernels ↔ registry for Blackboard, plans vs README numbers.
+
+Clean:
+- No content orphans; all knowledge pages indexed; no real broken wikilinks (false positives: `[[Page Slug]]` / `[[wikilinks]]` in log prose, `[[0, 1]]` in example output)
+- README scenarios 1–7 match [[Scenario Registry]]; scenario 7 Implemented with `examples/blackboard/{main.go,WALKTHROUGH.md}`
+- Catalogue row 10, [[Structural Patterns]] §10, [[Agent Patterns Catalog — Blackboard]], [[Example: Blackboard]], [[Wiki Index]], [[catrace API]] examples table already consistent Implemented
+- `plans/network-of-healers.md` correctly unnumbered (not README scenario 5)
+- `AGENTS.md` walkthrough count 6 and story count 17 match disk
+
+Fixed:
+- [[Agentic Patterns Catalogue]] APC blurb: stale “🔲 Planned — no example code” → ✅ Implemented `examples/blackboard/`
+- [[Joint Kernels and Coupling]]: “Planned Blackboard” → Implemented; sources note; link [[Example: Blackboard]] in construction/analysis
+- [[Scenario Registry]] Sources: add blackboard main.go + WALKTHROUGH
+
+Unfixable / needs human:
+- Active `wiki-knowledge-graph` Graph A/B baseline still pre–Prompt Chaining / Blackboard / APC page growth — re-baseline before final Verdict ([[Experiment Registry]] lint note)
+
+## [2026-08-05] query | random-walk deep verify (4 pages)
+
+Visited: [[Example: Simple Agent]], [[Agentic Patterns Catalogue]], [[catrace Glossary]], [[Structural Patterns]].
+
+Fixed:
+- Example Simple Agent: D/A prose mismatched `examples/simple_agent/main.go` (D escalate was 0.1/0.1 not 0.2/0.0; A escalate was “70% routine” not 0.2/0.8)
+- Structural §4 Parallelisation: entropy sentence was swarm copy-paste; aligned to `story-parallelisation.md`
+
+Open (not fixed):
+- Catalogue lead “every pattern has a story file” overclaims HITL (no `story-human-in-the-loop.md`; Structural §13 already notes this)
+- Glossary omits dedicated Trace / Entropy rate entries that exist in `GLOSSARY.md` (coverage gap, not contradiction)
+
+## [2026-08-05] lint | fix nodes-throttle hypothesis vs self_healing_nodes runner
+
+Random-walk finding: `experiments/nodes-throttle-vs-evolver/hypothesis.md` Variable table (B throttle 0.40, A boost +0.05, pre-renorm mutate sums) disagreed with `examples/self_healing_nodes/main.go` / WALKTHROUGH (B 0.45, A +0.02, boost+renorm). Results already matched the runner — updated Variables. Also corrected [[Example: Self-Healing Nodes]] “Variant B only” action-coupling wording.

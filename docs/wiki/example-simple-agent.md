@@ -2,7 +2,7 @@
 title: "Example: Simple Agent"
 tags: [example, simple-agent, pda, qualia-kernel, stationary, entropy-rate, ergodic]
 sources: [examples/simple_agent/WALKTHROUGH.md, docs/patterns/story-single-llm-agent.md]
-updated: 2026-08-02
+updated: 2026-08-05
 ---
 
 # Example: Simple Agent
@@ -25,9 +25,9 @@ This example is the minimal working demonstration of the [[PDA Triplet Model]]. 
 
 **P (2×2, W→X):** Imperfect perception. A routine task reads as routine 85% of the time; a complex task reads as risky 75% of the time. The 15% and 25% off-diagonal entries encode reading errors.
 
-**D (2×3, X→G):** Decision policy. Given `looks_routine`: answer (0.8), clarify (0.1), escalate (0.1). Given `looks_risky`: answer (0.1), clarify (0.3), escalate (0.6).
+**D (2×3, X→G):** Decision policy. Given `looks_routine`: answer (0.8), clarify (0.2), escalate (0.0). Given `looks_risky`: answer (0.1), clarify (0.3), escalate (0.6).
 
-**A (3×2, G→W):** Action effects. `answer` keeps the world routine 90% of the time but barely helps complex tasks (10%). `clarify` moves the world toward routine at 40%; `escalate` at 70%.
+**A (3×2, G→W):** Action effects. `answer` keeps the world routine 90% of the time but barely helps complex tasks (10%). `clarify` → routine 40% / complex 60%. `escalate` → routine 20% / complex 80% (escalation often reveals genuine complexity).
 
 ## Composed kernel Q = D·A·P
 
