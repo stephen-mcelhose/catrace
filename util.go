@@ -61,6 +61,35 @@ func normalizeVector(x []float64, tol float64) error {
 	return nil
 }
 
+// cloneProbDist copies v into a new probability distribution of length n.
+// When clampTiny is true, entries in (−tol, 0) are clamped to zero before the
+// negativity check. The result must sum to 1 within tol. label is used in
+// error messages (e.g. "start", "restart").
+func cloneProbDist(v []float64, n int, tol float64, label string, clampTiny bool) ([]float64, error) {
+	if len(v) != n {
+		return nil, fmt.Errorf("%s length %d does not match kernel size %d", label, len(v), n)
+	}
+	out := make([]float64, n)
+	sum := 0.0
+	for i, val := range v {
+		if clampTiny && val < 0 && math.Abs(val) <= tol {
+			val = 0
+		}
+		if val < 0 {
+			return nil, fmt.Errorf("%s[%d] is negative: %g", label, i, val)
+		}
+		out[i] = val
+		sum += val
+	}
+	if math.Abs(sum-1.0) > tol {
+		if clampTiny {
+			return nil, fmt.Errorf("%s does not sum to 1 (got %g, tol %g)", label, sum, tol)
+		}
+		return nil, fmt.Errorf("%s does not sum to 1 (got %g)", label, sum)
+	}
+	return out, nil
+}
+
 func rowSums(m *mat.Dense) []float64 {
 	r, c := m.Dims()
 	out := make([]float64, r)

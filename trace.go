@@ -10,12 +10,12 @@ import (
 // Trace computes the induced trace kernel on a subset A of states.
 // If P is partitioned as
 //
-// 	P = [ a  b ]
-// 	    [ d  c ]
+//	P = [ a  b ]
+//	    [ d  c ]
 //
 // with rows/columns of a indexed by A, then the trace is
 //
-// 	P_A = a + b (I - c)^(-1) d,
+//	P_A = a + b (I - c)^(-1) d,
 //
 // provided the excursion operator is well-defined.
 func (k *Kernel) Trace(subset []int, tol float64) (*Kernel, error) {
@@ -23,6 +23,34 @@ func (k *Kernel) Trace(subset []int, tol float64) (*Kernel, error) {
 		return nil, fmt.Errorf("nil kernel")
 	}
 	n := k.NumStates()
+	A, err := validateSubset(n, subset)
+	if err != nil {
+		return nil, err
+	}
+	Ac := complementIndices(n, A)
+	a := submatrix(k.P, A, A)
+	names := namesForSubset(k, A)
+	if len(Ac) == 0 {
+		return NewKernel(a, names)
+	}
+	b := submatrix(k.P, A, Ac)
+	c := submatrix(k.P, Ac, Ac)
+	d := submatrix(k.P, Ac, A)
+	t, err := excursionSolve(a, b, c, d)
+	if err != nil {
+		return nil, err
+	}
+	tr, err := NewKernel(t, names)
+	if err != nil {
+		return nil, err
+	}
+	if err := tr.NormalizeRows(tol); err != nil {
+		return nil, err
+	}
+	return tr, nil
+}
+
+func validateSubset(n int, subset []int) ([]int, error) {
 	if len(subset) == 0 {
 		return nil, fmt.Errorf("empty subset")
 	}
@@ -31,20 +59,18 @@ func (k *Kernel) Trace(subset []int, tol float64) (*Kernel, error) {
 			return nil, fmt.Errorf("subset index %d out of range [0,%d)", idx, n)
 		}
 	}
-	A := sortedCopy(subset)
-	Ac := complementIndices(n, A)
-	a := submatrix(k.P, A, A)
-	if len(Ac) == 0 {
-		names := make([]string, len(A))
-		for i, idx := range A {
-			names[i] = k.StateNames[idx]
-		}
-		return NewKernel(a, names)
-	}
-	b := submatrix(k.P, A, Ac)
-	c := submatrix(k.P, Ac, Ac)
-	d := submatrix(k.P, Ac, A)
+	return sortedCopy(subset), nil
+}
 
+func namesForSubset(k *Kernel, A []int) []string {
+	names := make([]string, len(A))
+	for i, idx := range A {
+		names[i] = k.StateNames[idx]
+	}
+	return names
+}
+
+func excursionSolve(a, b, c, d *mat.Dense) (*mat.Dense, error) {
 	m, _ := c.Dims()
 	IminusC := mat.NewDense(m, m, nil)
 	for i := 0; i < m; i++ {
@@ -56,7 +82,6 @@ func (k *Kernel) Trace(subset []int, tol float64) (*Kernel, error) {
 			IminusC.Set(i, j, v)
 		}
 	}
-
 	var X mat.Dense
 	if err := X.Solve(IminusC, d); err != nil {
 		return nil, fmt.Errorf("trace solve failed: %w", err)
@@ -65,19 +90,7 @@ func (k *Kernel) Trace(subset []int, tol float64) (*Kernel, error) {
 	bX.Mul(b, &X)
 	var t mat.Dense
 	t.Add(a, &bX)
-
-	names := make([]string, len(A))
-	for i, idx := range A {
-		names[i] = k.StateNames[idx]
-	}
-	tr, err := NewKernel(&t, names)
-	if err != nil {
-		return nil, err
-	}
-	if err := tr.NormalizeRows(tol); err != nil {
-		return nil, err
-	}
-	return tr, nil
+	return &t, nil
 }
 
 // IsTraceOf checks whether k matches the trace of parent on subset within tol.

@@ -2,7 +2,6 @@ package catrace
 
 import (
 	"fmt"
-	"math"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -92,43 +91,53 @@ func NewTeleportingKernelFromAdj(adj *mat.Dense, restart []float64, alpha float6
 		return nil, fmt.Errorf("adjacency matrix must be square, got %dx%d", r, c)
 	}
 	n := r
-	if len(restart) != n {
-		return nil, fmt.Errorf("restart length %d does not match matrix size %d", len(restart), n)
-	}
 	if alpha < 0 || alpha > 1 {
 		return nil, fmt.Errorf("alpha %g is out of range [0, 1]", alpha)
 	}
 	const tol = 1e-9
-	v := make([]float64, n)
-	sum := 0.0
-	for i, val := range restart {
-		if val < 0 {
-			return nil, fmt.Errorf("restart[%d] is negative: %g", i, val)
-		}
-		v[i] = val
-		sum += val
+	v, err := cloneProbDist(restart, n, tol, "restart", false)
+	if err != nil {
+		return nil, err
 	}
-	if math.Abs(sum-1.0) > tol {
-		return nil, fmt.Errorf("restart does not sum to 1 (got %g)", sum)
-	}
-	data := make([]float64, n*n)
-	for i := 0; i < n; i++ {
-		rowSum := 0.0
-		for j := 0; j < n; j++ {
-			val := adj.At(i, j)
-			if val < 0 {
-				return nil, fmt.Errorf("adjacency matrix has negative entry at (%d,%d): %g", i, j, val)
-			}
-			rowSum += val
-		}
-		for j := 0; j < n; j++ {
-			if rowSum > 0 {
-				data[i*n+j] = alpha*v[j] + (1-alpha)*adj.At(i, j)/rowSum
-			} else {
-				// Sink: no outgoing links — collapse entirely to restart.
-				data[i*n+j] = v[j]
-			}
-		}
+	data, err := teleportMatrix(adj, v, alpha)
+	if err != nil {
+		return nil, err
 	}
 	return NewKernel(mat.NewDense(n, n, data), names)
+}
+
+// teleportMatrix assembles the flat n×n entries of the teleporting kernel T.
+func teleportMatrix(adj *mat.Dense, v []float64, alpha float64) ([]float64, error) {
+	n := len(v)
+	data := make([]float64, n*n)
+	for i := 0; i < n; i++ {
+		row, err := teleportRow(adj, i, v, alpha)
+		if err != nil {
+			return nil, err
+		}
+		copy(data[i*n:(i+1)*n], row)
+	}
+	return data, nil
+}
+
+func teleportRow(adj *mat.Dense, i int, v []float64, alpha float64) ([]float64, error) {
+	n := len(v)
+	rowSum := 0.0
+	for j := 0; j < n; j++ {
+		val := adj.At(i, j)
+		if val < 0 {
+			return nil, fmt.Errorf("adjacency matrix has negative entry at (%d,%d): %g", i, j, val)
+		}
+		rowSum += val
+	}
+	row := make([]float64, n)
+	for j := 0; j < n; j++ {
+		if rowSum > 0 {
+			row[j] = alpha*v[j] + (1-alpha)*adj.At(i, j)/rowSum
+		} else {
+			// Sink: no outgoing links — collapse entirely to restart.
+			row[j] = v[j]
+		}
+	}
+	return row, nil
 }
