@@ -134,26 +134,33 @@ func (k *Kernel) NormalizeRows(tol float64) error {
 	}
 	r, c := k.P.Dims()
 	for i := 0; i < r; i++ {
-		sum := 0.0
-		for j := 0; j < c; j++ {
-			v := k.P.At(i, j)
-			if v < 0 && math.Abs(v) <= tol {
-				v = 0
-				k.P.Set(i, j, 0)
-			}
-			if v < 0 {
-				return fmt.Errorf("negative entry at (%d,%d): %g", i, j, v)
-			}
-			sum += v
-		}
-		if sum <= tol {
-			return fmt.Errorf("row %d has near-zero sum %g", i, sum)
-		}
-		for j := 0; j < c; j++ {
-			k.P.Set(i, j, k.P.At(i, j)/sum)
+		if err := k.normalizeRow(i, c, tol); err != nil {
+			return err
 		}
 	}
 	return k.Validate(math.Max(tol, 1e-9))
+}
+
+func (k *Kernel) normalizeRow(i, cols int, tol float64) error {
+	sum := 0.0
+	for j := 0; j < cols; j++ {
+		v := k.P.At(i, j)
+		if v < 0 && math.Abs(v) <= tol {
+			v = 0
+			k.P.Set(i, j, 0)
+		}
+		if v < 0 {
+			return fmt.Errorf("negative entry at (%d,%d): %g", i, j, v)
+		}
+		sum += v
+	}
+	if sum <= tol {
+		return fmt.Errorf("row %d has near-zero sum %g", i, sum)
+	}
+	for j := 0; j < cols; j++ {
+		k.P.Set(i, j, k.P.At(i, j)/sum)
+	}
+	return nil
 }
 
 // Multiply returns the matrix product k·other as a new Kernel.

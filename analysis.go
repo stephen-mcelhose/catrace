@@ -24,8 +24,22 @@ func (k *Kernel) Classes(tol float64) (*ClassDecomposition, error) {
 		return nil, fmt.Errorf("nil kernel")
 	}
 	n := k.NumStates()
-	adj := make([][]int, n)
-	rev := make([][]int, n)
+	adj, rev := transitionDigraph(k, n, tol)
+	sccs := kosarajuSCC(adj, rev, n)
+	recurrent, transient, periods := classifyRecurrent(adj, sccs)
+	return &ClassDecomposition{
+		SCCs:      sccs,
+		Recurrent: recurrent,
+		Transient: sortedCopy(transient),
+		Periods:   periods,
+	}, nil
+}
+
+// transitionDigraph builds the forward and reverse digraphs of positive
+// transitions in k (edge i→j when P[i,j] > tol).
+func transitionDigraph(k *Kernel, n int, tol float64) (adj, rev [][]int) {
+	adj = make([][]int, n)
+	rev = make([][]int, n)
 	for i := 0; i < n; i++ {
 		for j := 0; j < n; j++ {
 			if k.P.At(i, j) > tol {
@@ -34,89 +48,97 @@ func (k *Kernel) Classes(tol float64) (*ClassDecomposition, error) {
 			}
 		}
 	}
+	return adj, rev
+}
 
+func kosarajuSCC(adj, rev [][]int, n int) [][]int {
 	visited := make([]bool, n)
 	order := make([]int, 0, n)
-	var dfs1 func(int)
-	dfs1 = func(v int) {
-		visited[v] = true
-		for _, w := range adj[v] {
-			if !visited[w] {
-				dfs1(w)
-			}
-		}
-		order = append(order, v)
-	}
 	for i := 0; i < n; i++ {
 		if !visited[i] {
-			dfs1(i)
+			dfsFinishOrder(adj, visited, &order, i)
 		}
 	}
-
 	for i := range visited {
 		visited[i] = false
 	}
 	var sccs [][]int
-	var dfs2 func(int, *[]int)
-	dfs2 = func(v int, comp *[]int) {
-		visited[v] = true
-		*comp = append(*comp, v)
-		for _, w := range rev[v] {
-			if !visited[w] {
-				dfs2(w, comp)
-			}
-		}
-	}
 	for i := len(order) - 1; i >= 0; i-- {
 		v := order[i]
 		if !visited[v] {
 			comp := []int{}
-			dfs2(v, &comp)
+			dfsCollectComp(rev, visited, &comp, v)
 			sccs = append(sccs, sortedCopy(comp))
 		}
 	}
+	return sccs
+}
 
-	classOf := make(map[int]int, n)
+func dfsFinishOrder(adj [][]int, visited []bool, order *[]int, v int) {
+	visited[v] = true
+	for _, w := range adj[v] {
+		if !visited[w] {
+			dfsFinishOrder(adj, visited, order, w)
+		}
+	}
+	*order = append(*order, v)
+}
+
+func dfsCollectComp(rev [][]int, visited []bool, comp *[]int, v int) {
+	visited[v] = true
+	*comp = append(*comp, v)
+	for _, w := range rev[v] {
+		if !visited[w] {
+			dfsCollectComp(rev, visited, comp, w)
+		}
+	}
+}
+
+func classifyRecurrent(adj [][]int, sccs [][]int) (recurrent [][]int, transient []int, periods map[int]int) {
+	classOf := make(map[int]int)
 	for idx, comp := range sccs {
 		for _, v := range comp {
 			classOf[v] = idx
 		}
 	}
-	recurrent := [][]int{}
-	transient := []int{}
-	periods := map[int]int{}
+	recurrent = [][]int{}
+	transient = []int{}
+	periods = map[int]int{}
 	for idx, comp := range sccs {
-		closed := true
-		for _, v := range comp {
-			for _, w := range adj[v] {
-				if classOf[w] != idx {
-					closed = false
-					break
-				}
-			}
-			if !closed {
-				break
-			}
-		}
-		if closed {
+		if isClosedClass(adj, comp, idx, classOf) {
 			recurrent = append(recurrent, comp)
 			periods[idx] = periodOfClass(adj, comp)
 		} else {
 			transient = append(transient, comp...)
 		}
 	}
-	return &ClassDecomposition{SCCs: sccs, Recurrent: recurrent, Transient: sortedCopy(transient), Periods: periods}, nil
+	return recurrent, transient, periods
+}
+
+func isClosedClass(adj [][]int, comp []int, idx int, classOf map[int]int) bool {
+	for _, v := range comp {
+		for _, w := range adj[v] {
+			if classOf[w] != idx {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func periodOfClass(adj [][]int, comp []int) int {
 	if len(comp) == 0 {
 		return 1
 	}
+	dist := bfsDistancesInComp(adj, comp, comp[0])
+	return periodFromDistances(adj, comp, dist)
+}
+
+func bfsDistancesInComp(adj [][]int, comp []int, root int) map[int]int {
 	inComp := map[int]bool{}
 	for _, v := range comp {
 		inComp[v] = true
 	}
-	root := comp[0]
 	dist := map[int]int{root: 0}
 	queue := []int{root}
 	for len(queue) > 0 {
@@ -131,6 +153,14 @@ func periodOfClass(adj [][]int, comp []int) int {
 				queue = append(queue, w)
 			}
 		}
+	}
+	return dist
+}
+
+func periodFromDistances(adj [][]int, comp []int, dist map[int]int) int {
+	inComp := map[int]bool{}
+	for _, v := range comp {
+		inComp[v] = true
 	}
 	g := 0
 	for _, v := range comp {

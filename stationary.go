@@ -49,42 +49,39 @@ func (k *Kernel) StationaryFrom(start []float64, tol float64, maxIter int) ([]fl
 	if n == 0 {
 		return nil, fmt.Errorf("empty kernel")
 	}
-	if len(start) != n {
-		return nil, fmt.Errorf("start length %d does not match kernel size %d", len(start), n)
-	}
 	if maxIter <= 0 {
 		maxIter = 1000
 	}
-	pi := make([]float64, n)
-	sum := 0.0
-	for i, v := range start {
-		if v < 0 && math.Abs(v) <= tol {
-			v = 0
-		}
-		if v < 0 {
-			return nil, fmt.Errorf("start[%d] is negative: %g", i, v)
-		}
-		pi[i] = v
-		sum += v
+	pi, err := cloneProbDist(start, n, tol, "start", true)
+	if err != nil {
+		return nil, err
 	}
-	if math.Abs(sum-1.0) > tol {
-		return nil, fmt.Errorf("start does not sum to 1 (got %g, tol %g)", sum, tol)
+	if err := requireErgodicAperiodic(k, tol); err != nil {
+		return nil, err
 	}
+	return powerIterate(k, pi, tol, maxIter)
+}
+
+func requireErgodicAperiodic(k *Kernel, tol float64) error {
 	cd, err := k.Classes(tol)
 	if err != nil {
-		return nil, fmt.Errorf("ergodicity check: %w", err)
+		return fmt.Errorf("ergodicity check: %w", err)
 	}
 	if len(cd.Recurrent) != 1 {
-		return nil, fmt.Errorf("StationaryFrom requires an ergodic kernel: found %d recurrent classes", len(cd.Recurrent))
+		return fmt.Errorf("StationaryFrom requires an ergodic kernel: found %d recurrent classes", len(cd.Recurrent))
 	}
 	var period int
 	for _, p := range cd.Periods {
 		period = p
 	}
 	if period != 1 {
-		return nil, fmt.Errorf("StationaryFrom requires an aperiodic kernel: recurrent class has period %d", period)
+		return fmt.Errorf("StationaryFrom requires an aperiodic kernel: recurrent class has period %d", period)
 	}
+	return nil
+}
 
+func powerIterate(k *Kernel, start []float64, tol float64, maxIter int) ([]float64, error) {
+	pi := start
 	for iter := 0; iter < maxIter; iter++ {
 		next, err := k.LeftAction(pi)
 		if err != nil {
@@ -93,18 +90,23 @@ func (k *Kernel) StationaryFrom(start []float64, tol float64, maxIter int) ([]fl
 		if err := normalizeVector(next, tol); err != nil {
 			return nil, err
 		}
-		delta := 0.0
-		for i := range pi {
-			if d := math.Abs(next[i] - pi[i]); d > delta {
-				delta = d
-			}
-		}
+		delta := maxAbsDiff(pi, next)
 		pi = next
 		if delta <= tol {
 			return pi, nil
 		}
 	}
 	return pi, fmt.Errorf("stationary iteration did not converge within %d iterations", maxIter)
+}
+
+func maxAbsDiff(a, b []float64) float64 {
+	delta := 0.0
+	for i := range a {
+		if d := math.Abs(b[i] - a[i]); d > delta {
+			delta = d
+		}
+	}
+	return delta
 }
 
 // PersonalizedPageRank computes the Personalized PageRank vector for the given
@@ -129,33 +131,23 @@ func (k *Kernel) PersonalizedPageRank(restart []float64, alpha, tol float64, max
 	if n == 0 {
 		return nil, fmt.Errorf("empty kernel")
 	}
-	if len(restart) != n {
-		return nil, fmt.Errorf("restart length %d does not match kernel size %d", len(restart), n)
-	}
 	if alpha < 0 || alpha > 1 {
 		return nil, fmt.Errorf("alpha %g is out of range [0, 1]", alpha)
 	}
 	if maxIter <= 0 {
 		maxIter = 1000
 	}
-	// Validate and copy restart — do not mutate the caller's slice.
-	v := make([]float64, n)
-	sum := 0.0
-	for i, val := range restart {
-		if val < 0 && math.Abs(val) <= tol {
-			val = 0
-		}
-		if val < 0 {
-			return nil, fmt.Errorf("restart[%d] is negative: %g", i, val)
-		}
-		v[i] = val
-		sum += val
+	v, err := cloneProbDist(restart, n, tol, "restart", true)
+	if err != nil {
+		return nil, err
 	}
-	if math.Abs(sum-1.0) > tol {
-		return nil, fmt.Errorf("restart does not sum to 1 (got %g, tol %g)", sum, tol)
-	}
+	return personalizedPowerIterate(k, v, alpha, tol, maxIter)
+}
+
+func personalizedPowerIterate(k *Kernel, restart []float64, alpha, tol float64, maxIter int) ([]float64, error) {
+	n := len(restart)
 	x := make([]float64, n)
-	copy(x, v)
+	copy(x, restart)
 	for iter := 0; iter < maxIter; iter++ {
 		propagated, err := k.LeftAction(x)
 		if err != nil {
@@ -163,14 +155,9 @@ func (k *Kernel) PersonalizedPageRank(restart []float64, alpha, tol float64, max
 		}
 		next := make([]float64, n)
 		for i := range next {
-			next[i] = alpha*v[i] + (1-alpha)*propagated[i]
+			next[i] = alpha*restart[i] + (1-alpha)*propagated[i]
 		}
-		delta := 0.0
-		for i := range x {
-			if d := math.Abs(next[i] - x[i]); d > delta {
-				delta = d
-			}
-		}
+		delta := maxAbsDiff(x, next)
 		x = next
 		if delta <= tol {
 			return x, nil
@@ -202,24 +189,13 @@ func (k *Kernel) TeleportingKernel(restart []float64, alpha float64) (*Kernel, e
 	if n == 0 {
 		return nil, fmt.Errorf("empty kernel")
 	}
-	if len(restart) != n {
-		return nil, fmt.Errorf("restart length %d does not match kernel size %d", len(restart), n)
-	}
 	if alpha < 0 || alpha > 1 {
 		return nil, fmt.Errorf("alpha %g is out of range [0, 1]", alpha)
 	}
 	const tol = 1e-9
-	v := make([]float64, n)
-	sum := 0.0
-	for i, val := range restart {
-		if val < 0 {
-			return nil, fmt.Errorf("restart[%d] is negative: %g", i, val)
-		}
-		v[i] = val
-		sum += val
-	}
-	if math.Abs(sum-1.0) > tol {
-		return nil, fmt.Errorf("restart does not sum to 1 (got %g)", sum)
+	v, err := cloneProbDist(restart, n, tol, "restart", false)
+	if err != nil {
+		return nil, err
 	}
 	data := make([]float64, n*n)
 	for i := 0; i < n; i++ {
