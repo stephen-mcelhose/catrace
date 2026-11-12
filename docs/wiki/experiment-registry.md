@@ -36,6 +36,7 @@ are on `main`).
 | `n-agent-scalability` | Dense joint kernel approach becomes intractable at N=4+ agents; trace collapses are the solution | Pending | — | #27 |
 | `heal-on-critical-path` | On a fixed \(1\to2\) load graph, strong local heal belongs on the downstream sink more than on the upstream feeder | Pending | — (needs `network_of_healers`) | #33 |
 | `collapse-masks-heterogeneity` | Strong-sink / weak-feeder makes collapsed pool_ok look healthier than joint upstream-overload mass warrants | Pending | — (needs `network_of_healers`) | #34 |
+| `stream-deep-research-trace` | On harvey deep-research JSONL, Trace + AnalyzeAndSuggest + DriftScore behave as predicted (fold, ε-scaling knobs, phase-spike drift) | Pending | provisional: supported (5/6) — not on `main` yet | #58 |
 
 ## Active experiments
 

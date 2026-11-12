@@ -43,6 +43,7 @@ Experiments are distinct from examples. An **example** (`examples/`) demonstrate
 | [kg-grounding-agent-behavior](kg-grounding-agent-behavior/hypothesis.md) | Knowledge graph quality systematically shifts knowledge agent behavior — richer graph → higher π(understood), faster recovery, lower entropy | Pending | — | [#32](https://github.com/stephen-mcelhose/catrace/issues/32) |
 | [heal-on-critical-path](heal-on-critical-path/hypothesis.md) | On a fixed \(1\to2\) load graph, strong local heal belongs on the downstream sink more than on the upstream feeder | Pending | — (needs `network_of_healers`) | [#33](https://github.com/stephen-mcelhose/catrace/issues/33) |
 | [collapse-masks-heterogeneity](collapse-masks-heterogeneity/hypothesis.md) | Strong-sink / weak-feeder makes collapsed pool_ok look healthier than joint upstream-overload mass warrants | Pending | — (needs `network_of_healers`) | [#34](https://github.com/stephen-mcelhose/catrace/issues/34) |
+| [stream-deep-research-trace](stream-deep-research-trace/hypothesis.md) | On harvey deep-research JSONL, Trace + AnalyzeAndSuggest + DriftScore behave as predicted (fold, ε-scaling knobs, phase-spike drift) | Pending | provisional: supported (5/6) — not on `main` yet | [#58](https://github.com/stephen-mcelhose/catrace/issues/58) |
 
 ## Methodology
 

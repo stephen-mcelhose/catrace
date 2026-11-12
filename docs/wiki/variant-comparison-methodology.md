@@ -100,7 +100,7 @@ The `experiments/` directory is where these comparisons live, separate from the 
 
 ## Pending experiments
 
-Six further experiments are filed and awaiting runs (the last two depend on
+Further experiments are filed and awaiting runs (the last two depend on
 `network_of_healers`):
 
 | Slug | Claim | Issue |
@@ -111,8 +111,9 @@ Six further experiments are filed and awaiting runs (the last two depend on
 | `n-agent-scalability` | The trace chain restores tractability for N-agent networks: a joint kernel built over k^N states can be collapsed to a small observable subset without losing stationary consistency | #27 |
 | `heal-on-critical-path` | On a fixed \(1\to2\) load graph, strong local heal on the downstream sink beats the same heal on the upstream feeder (vertex vs edge remediation) | #33 |
 | `collapse-masks-heterogeneity` | Strong-sink / weak-feeder makes collapsed `pool_ok` look healthier than joint upstream-overload mass warrants — dashboard masking under heterogeneity | #34 |
+| `stream-deep-research-trace` | On harvey deep-research JSONL, Trace fold + AnalyzeAndSuggest ε-scaling + DriftScore phase spikes hold | #58 |
 
-These experiments extend the methodology into **perception quality** (kg-grounding), **measurement** (spectral gap, sensitivity), **scale** (N-agent trace collapse), and **heterogeneous multi-node graphs** (heal placement + collapse masking; blocked on identical-node `network_of_healers` first). The hypothesis files are in `experiments/<slug>/hypothesis.md`.
+These experiments extend the methodology into **perception quality** (kg-grounding), **measurement** (spectral gap, sensitivity), **scale** (N-agent trace collapse), **heterogeneous multi-node graphs** (heal placement + collapse masking; blocked on identical-node `network_of_healers` first), and **streaming real-trace validation** (`stream` Estimator / Monitor / Suggest). The hypothesis files are in `experiments/<slug>/hypothesis.md`.
 
 ## Sources
 

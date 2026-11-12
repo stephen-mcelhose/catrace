@@ -199,3 +199,13 @@ Fixed:
 
 Unfixable / needs human:
 - Active `wiki-knowledge-graph` still models “14 existing + 14 planned”; [[Example: Prompt Chaining]] landing on main invalidates Graph A baseline — noted on [[Experiment Registry]]; re-baseline before final Verdict
+
+---
+
+## [2026-11-12] file | experiment stream-deep-research-trace
+
+Filed `experiments/stream-deep-research-trace/hypothesis.md` (Pending; Results empty).
+Added `tools/suggest` Cobra CLI (`json.Decoder` via `stream.IngestJSONL`) and exported `stream.TraceByName`.
+Propagated to: [[Experiment Registry]], `experiments/README.md`, [[Variant Comparison Methodology]] pending table, `stream/docs/experiments.md`.
+Opened issue [#58](https://github.com/stephen-mcelhose/catrace/issues/58). Arbor cross-validation deferred until harvey Results.
+Experiment C treats mid-stream Trace singularity as drift signal (sentinel), not a dropped sample.
